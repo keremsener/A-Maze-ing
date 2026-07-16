@@ -66,7 +66,7 @@ lint-strict:
 # Run tests using pytest
 test:
 	@printf "$(GREEN)$(BOLD)[Test]$(RESET) $(GREEN)Running pytest...$(RESET)\n"
-	$(VENV)/bin/pytest tests -q
+	PYTHONPATH=. $(VENV)/bin/pytest tests -q
 
 # Build the mazegen wheel package
 package:
