@@ -59,10 +59,11 @@ class MazeGenerator:
             )
 
     def _in_bounds(self, x: int, y: int) -> bool:
-        if (x >= 0 and x <= self.width) and (y >= 0 and x <= self.height):
-            return True
-        return False
+        return 0 <= x < self.width and 0 <= y < self.height
 
+    def _neighbour(self, x: int, y: int, direction: int) -> tuple[int, int]:
+        dx, dy = STEP[direction]
+        return x + dx, y + dy
 
 if __name__ == "__main__":
     maze = MazeGenerator(
