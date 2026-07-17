@@ -1,6 +1,7 @@
 from a_maze_ing import MazeGenerator, NORTH, EAST
 
-if __name__ == "__main__":
+
+def main_func():
 
     # 1. Create a fresh 4x4 maze
 
@@ -41,3 +42,7 @@ if __name__ == "__main__":
     maze._close_wall(0, 0, EAST)
     # Show the grid after restoring the wall
     print_grid("AFTER CLOSING WALL (Restored)")
+
+
+if __name__ == "__main__":
+    main_func()

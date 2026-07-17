@@ -34,8 +34,8 @@ install:
 
 # Run the main program
 run:
-	@printf "$(BLUE)$(BOLD)[Run]$(RESET) $(BLUE)Executing a_maze_ing.py...$(RESET)\n"
-	$(PY) a_maze_ing.py $(CONFIG)
+	@printf "$(BLUE)$(BOLD)[Run]$(RESET) $(BLUE)Executing main.py...$(RESET)\n"
+	$(PY) main.py $(CONFIG)
 
 # Run the program in debug mode (pdb)
 debug:
