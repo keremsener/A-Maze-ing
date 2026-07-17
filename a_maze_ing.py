@@ -106,21 +106,26 @@ class MazeGenerator:
         self.grid[y][x] |= direction
         self.grid[ny][nx] |= OPPOSITE[direction]
 
+    @property
+    def pattern_cells(self) -> frozenset[tuple[int, int]]:
+        """Return the set of cells reserved for the '42' pattern."""
+        return self._blocked
+
+    @property
+    def pattern_applied(self) -> bool:
+        """Return True if the '42' pattern has been applied to the maze."""
+        return bool(self._blocked)
+
 
 def main_func():
 
     # 1. Create a fresh 4x4 maze
 
     maze = MazeGenerator(
-
         width=4,
-
         height=4,
-
         entry=(0, 0),
-
         exit=(3, 3)
-
     )
 
     def print_grid(title: str):
