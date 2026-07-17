@@ -159,7 +159,6 @@ class MazeGenerator:
 def main_func():
 
     # 1. Create a fresh 4x4 maze
-
     maze = MazeGenerator(
         width=4,
         height=4,
@@ -168,15 +167,10 @@ def main_func():
     )
 
     def print_grid(title: str):
-
         print(f"\n=== {title} ===")
-
         for y in range(maze.height):
-
             row_str = []
-
             for x in range(maze.width):
-
                 # Format numbers to be 2 chars wide for alignment (e.g., 15,  7, 13)
                 row_str.append(f"{maze.grid[y][x]:2}")
             print("  ".join(row_str))
@@ -192,6 +186,18 @@ def main_func():
     maze._close_wall(0, 0, EAST)
     # Show the grid after restoring the wall
     print_grid("AFTER CLOSING WALL (Restored)")
+
+    # 4. Preview the '42' pattern
+    pattern_maze = MazeGenerator(width=9, height=7, entry=(0, 0), exit=(8, 6))
+    print("\n=== '42' PATTERN PREVIEW ===")
+    for y in range(pattern_maze.height):
+        row_str = []
+        for x in range(pattern_maze.width):
+            if (x, y) in pattern_maze.pattern_cells:
+                row_str.append("XX")
+            else:
+                row_str.append("..")
+        print("  ".join(row_str))
 
 
 if __name__ == "__main__":
