@@ -10,6 +10,29 @@ ALL_WALLS = NORTH | EAST | SOUTH | WEST
 OPPOSITE = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST}
 STEP = {NORTH: (0, -1), EAST: (1, 0), SOUTH: (0, 1), WEST: (-1, 0)}
 
+# ---- "42" PATTERN CONSTANTS ----
+PATTERN_HEIGHT = 5
+PATTERN_WIDTH = 7
+
+MIN_MAP_HEIGHT = 7
+MIN_MAP_WIDTH = 9
+
+FOUR_PATTERN = (
+    "..X",
+    "X.X",
+    "XXX",
+    "..X",
+    "..X",
+)
+
+TWO_PATTERN = (
+    "XXX",
+    "..X",
+    "XXX",
+    "X..",
+    "XXX",
+)
+
 
 class MazeError(Exception):
     """Maze configuration errors."""
