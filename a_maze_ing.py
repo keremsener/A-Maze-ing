@@ -58,6 +58,7 @@ class MazeGenerator:
         self.random = Random(seed)
         self._validate()
         self.grid = [[ALL_WALLS] * self.width for _ in range(self.height)]
+        self._blocked = self._compute_pattern()
 
     def _validate(self) -> None:
         if self.width < 2 or self.height < 2:
@@ -141,6 +142,18 @@ class MazeGenerator:
                     cells.add((x0 + 4 + c, y0 + r))
 
         return frozenset(cells)
+
+    def _compute_pattern(self):
+        if self.height < MIN_MAP_HEIGHT or self.width < MIN_MAP_WIDTH:
+            return frozenset()
+        x0 = (self.width - PATTERN_WIDTH) // 2
+        forbidden_place = (self.width // 2, self.height // 2)
+        coordinates = {self.entry, self.exit, forbidden_place}
+        for y0 in self._pattern_rows():
+            candidate_cells = self._block_at(x0, y0)
+            if candidate_cells.isdisjoint(coordinates):
+                return candidate_cells
+        return frozenset()
 
 
 def main_func():
