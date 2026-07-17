@@ -124,6 +124,24 @@ class MazeGenerator:
 
         return sorted(range(lowest, highest + 1), key=lambda y: abs(y - centred))
 
+    def _block_at(self, x0: int, y0: int) -> frozenset[tuple[int, int]]:
+        cells = set()
+
+        # Process the '4' digit pattern row by row and char by char
+        for r, row_str in enumerate(FOUR_PATTERN):
+            for c, char in enumerate(row_str):
+                if char == "X":
+                    cells.add((x0 + c, y0 + r))
+
+        # Process the '2' digit pattern
+        for r, row_str in enumerate(TWO_PATTERN):
+            for c, char in enumerate(row_str):
+                if char == "X":
+                    # Shift 4 units right on the X-axis to avoid overlapping with the '4'
+                    cells.add((x0 + 4 + c, y0 + r))
+
+        return frozenset(cells)
+
 
 def main_func():
 
