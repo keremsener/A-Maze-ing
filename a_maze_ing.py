@@ -116,6 +116,14 @@ class MazeGenerator:
         """Return True if the '42' pattern has been applied to the maze."""
         return bool(self._blocked)
 
+    def _pattern_rows(self) -> list[int]:
+        """Candidate top rows, closest to the centred position first."""
+        lowest = 1
+        highest = self.height - PATTERN_HEIGHT - 1
+        centred = (self.height - PATTERN_HEIGHT) // 2
+
+        return sorted(range(lowest, highest + 1), key=lambda y: abs(y - centred))
+
 
 def main_func():
 
