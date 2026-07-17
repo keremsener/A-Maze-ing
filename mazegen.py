@@ -65,6 +65,13 @@ class MazeGenerator:
         dx, dy = STEP[direction]
         return x + dx, y + dy
 
+    def _open_wall(self, x: int, y: int, direction: int):
+        # The new neighbor's coordinates are return
+        nx, ny = self._neighbour(x, y, direction)
+        if not self._in_bounds(nx, ny):
+            raise MazeError("Cannot go outside the map")
+
+
 if __name__ == "__main__":
     maze = MazeGenerator(
         width=4,
