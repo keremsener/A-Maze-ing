@@ -63,25 +63,37 @@ class MazeGenerator:
 
     def _validate(self) -> None:
         if self.width < 2 or self.height < 2:
-            raise MazeError(
-                f"Maze size must be at least 2x2 (got {self.width}x{self.height})."
-            )
+            try:
+                raise MazeError(
+                    f"Maze size must be at least 2x2 (got {self.width}x{self.height})."
+                )
+            except MazeError as e:
+                print(e)
 
         if self.entry == self.exit:
-            raise MazeError("Entry and exit cannot be the same point.")
+            try:
+                raise MazeError("Entry and exit cannot be the same point.")
+            except MazeError as e:
+                print(e)
         self._validate_point(self.entry, "Entry")
         self._validate_point(self.exit, "Exit")
 
     def _validate_point(self, point: tuple[int, int], name: str) -> None:
         if not (0 <= point[0] < self.width):
-            raise MazeError(
-                f"{name} x-coordinate ({point[0]}) is outside the maze."
-            )
+            try:
+                raise MazeError(
+                    f"{name} x-coordinate ({point[0]}) is outside the maze."
+                )
+            except MazeError as e:
+                print(e)
 
         if not (0 <= point[1] < self.height):
-            raise MazeError(
-                f"{name} y-coordinate ({point[1]}) is outside the maze."
-            )
+            try:
+                raise MazeError(
+                    f"{name} y-coordinate ({point[1]}) is outside the maze."
+                )
+            except MazeError as e:
+                print(e)
 
     def _in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
@@ -94,7 +106,10 @@ class MazeGenerator:
         # The new neighbor's coordinates are return
         nx, ny = self._neighbour(x, y, direction)
         if not self._in_bounds(nx, ny):
-            raise MazeError("Cannot go outside the map")
+            try:
+                raise MazeError("Cannot go outside the map")
+            except MazeError as e:
+                print(e)
         # Don't change the cell value; just clear the specified direction bit.
         self.grid[y][x] &= ~direction
         self.grid[ny][nx] &= ~OPPOSITE[direction]
