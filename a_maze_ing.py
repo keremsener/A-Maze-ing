@@ -227,6 +227,19 @@ class MazeGenerator:
         self._close_wall(x, y, direction)
         return danger
 
+    def _braid(self) -> None:
+        safe_zone = self._open_cells()
+        directions = [NORTH, EAST, SOUTH, WEST]
+        for x, y in safe_zone:
+            if self._open_count(x, y) == 1:
+                self.random.shuffle(directions)
+                for direction in directions:
+                    nx, ny = self._neighbour(x, y, direction)
+                    if self._in_bounds(nx, ny) and (nx, ny) not in self._blocked:
+                        if not self._creates_open_area(x, y, direction):
+                            self._open_wall(x, y, direction)
+                            break
+
 
 def main_func():
 
