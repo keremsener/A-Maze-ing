@@ -125,6 +125,34 @@ class MazeGenerator:
                     safe_zone.append((x, y))
         return safe_zone
 
+    def _carve(self) -> None:
+        start = self.entry
+        stack = [start]  # yolumuzu kaybetmemek için
+        visited = {start}  # Gittiğimiz yerleri unutmamız için
+        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
+
+        while stack:
+            x, y = stack[-1]
+            option = []
+            for direction in DIRECTIONS:
+                nx, ny = self._neighbour(x, y, direction)
+                if not self._in_bounds(nx, ny):
+                    continue
+                if (nx, ny) in self._blocked or (nx, ny) in visited:
+                    continue
+                option.append((direction, nx, ny))
+            if not option:
+                stack.pop()
+                continue
+            direction, nx, ny = self.random.choice(option)
+            self._open_wall(x, y, direction)
+            visited.add((nx, ny))
+            stack.append((nx, ny))
+
+    def generate(self) -> list[list[int]]:
+        self._carve()
+        return self.grid
+
     def _pattern_rows(self) -> list[int]:
         """Candidate top rows, closest to the centred position first."""
         lowest = 1
