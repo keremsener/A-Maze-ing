@@ -1,6 +1,7 @@
 from mazegen import MazeGenerator, MazeError, EAST
 # pip install -e ./packages/mazegen
 
+
 def main_func():
 
     # 1. Create a fresh 4x4 maze
@@ -62,13 +63,24 @@ def main_func():
     pacman_maze = MazeGenerator(
         width=10, height=10, entry=(0, 0), exit=(9, 9), perfect=False)
     pacman_maze.generate()
+    solution_path = pacman_maze.solve()
+
     for y in range(pacman_maze.height):
         row_str = []
         for x in range(pacman_maze.width):
-            if (x, y) in pacman_maze.pattern_cells:
-                row_str.append("XX")
+            if (x, y) == pacman_maze.entry:
+                row_str.append("EN")
+            elif (x, y) == pacman_maze.exit:
+                row_str.append("EX")
+            elif (x, y) in pacman_maze.pattern_cells:
+                row_str.append("||")
+            # EĞER BU HÜCRE ÇÖZÜM YOLUNUN İÇİNDEYSE
+            elif (x, y) in solution_path:
+                # Ayak izi gibi görünmesi için nokta koyuyoruz
+                row_str.append("..")
             else:
                 row_str.append(f"{pacman_maze.grid[y][x]:2}")
+
         print("  ".join(row_str))
 
 

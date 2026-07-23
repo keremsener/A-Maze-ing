@@ -241,3 +241,34 @@ class MazeGenerator:
                         if not self._creates_open_area(x, y, direction):
                             self._open_wall(x, y, direction)
                             break
+
+    def solve(self) -> list[tuple[int, int]]:
+        """BFS algoritması ile girişten çıkışa giden yolu bulur."""
+        queue = [[self.entry]]  # Gidilecek yolların listesi
+        visited = {self.entry}  # Kendi etrafımızda dönmemek için hafıza
+
+        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
+
+        while queue:
+            # Kuyruktaki ilk yolu al
+            path = queue.pop(0)
+            # Bu yolun en sonundaki (şu an bulunduğumuz) hücreyi al
+            x, y = path[-1]
+
+            # Eğer çıkışa ulaştıysak, bu yolu direkt teslim et
+            if (x, y) == self.exit:
+                return path
+
+            # Çıkışta değilsek, 4 yöne bak
+            for direction in DIRECTIONS:
+                # O yönde DUVAR YOKSA (Bitwise kontrolü)
+                if not self.grid[y][x] & direction:
+                    nx, ny = self._neighbour(x, y, direction)
+                    # Daha önce o hücreye gitmediysek
+                    if (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        # Mevcut yola bu yeni adımı ekle ve kuyruğa at
+                        queue.append(path + [(nx, ny)])
+
+        # Eğer harita çözülemiyorsa boş liste dön
+        return []
