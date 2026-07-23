@@ -128,7 +128,7 @@ class MazeGenerator:
     def _carve(self) -> None:
         start = self.entry
         stack = [start]  # yolumuzu kaybetmemek için
-        visited = {start}  # Gittiğimiz yerleri unutmamız için
+        visited = {start}  # Gittiğimiz yerleri unutmamak için
         DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
 
         while stack:
