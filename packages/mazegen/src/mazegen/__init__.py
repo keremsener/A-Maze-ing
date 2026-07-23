@@ -9,6 +9,7 @@ WEST = 8
 ALL_WALLS = NORTH | EAST | SOUTH | WEST
 OPPOSITE = {NORTH: SOUTH, SOUTH: NORTH, EAST: WEST, WEST: EAST}
 STEP = {NORTH: (0, -1), EAST: (1, 0), SOUTH: (0, 1), WEST: (-1, 0)}
+DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
 
 # ---- "42" PATTERN CONSTANTS ----
 PATTERN_HEIGHT = 5
@@ -129,7 +130,6 @@ class MazeGenerator:
         start = self.entry
         stack = [start]  # yolumuzu kaybetmemek için
         visited = {start}  # Gittiğimiz yerleri unutmamak için
-        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
 
         while stack:
             x, y = stack[-1]
@@ -194,7 +194,6 @@ class MazeGenerator:
         return frozenset()
 
     def _open_count(self, x: int, y: int) -> int:
-        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
         counter: int = 0
         for direction in DIRECTIONS:
             if not self.grid[y][x] & direction:
@@ -231,11 +230,11 @@ class MazeGenerator:
 
     def _braid(self) -> None:
         safe_zone = self._open_cells()
-        directions = [NORTH, EAST, SOUTH, WEST]
         for x, y in safe_zone:
             if self._open_count(x, y) == 1:
-                self.random.shuffle(directions)
-                for direction in directions:
+                local_directions = list(DIRECTIONS)
+                self.random.shuffle(local_directions)
+                for direction in DIRECTIONS:
                     nx, ny = self._neighbour(x, y, direction)
                     if self._in_bounds(nx, ny) and (nx, ny) not in self._blocked:
                         if not self._creates_open_area(x, y, direction):
@@ -246,8 +245,6 @@ class MazeGenerator:
         """BFS algoritması ile girişten çıkışa giden yolu bulur."""
         queue = [[self.entry]]  # Gidilecek yolların listesi
         visited = {self.entry}  # Kendi etrafımızda dönmemek için hafıza
-
-        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
 
         while queue:
             # Kuyruktaki ilk yolu al
