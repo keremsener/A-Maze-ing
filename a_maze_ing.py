@@ -191,6 +191,14 @@ class MazeGenerator:
                 return candidate_cells
         return frozenset()
 
+    def _open_count(self, x: int, y: int) -> int:
+        DIRECTIONS = (NORTH, EAST, SOUTH, WEST)
+        counter: int = 0
+        for direction in DIRECTIONS:
+            if not self.grid[y][x] & direction:
+                counter += 1
+        return counter
+
 
 def main_func():
 
