@@ -215,6 +215,18 @@ class MazeGenerator:
                     return False
         return True
 
+    def _creates_open_area(self, x: int, y: int, direction: int) -> bool:
+        self._open_wall(x, y, direction)
+        nx, ny = self._neighbour(x, y, direction)
+        danger = False
+        for cx, cy in ((x, y), (nx, ny)):
+            for x0 in range(cx - 2, cx + 1):
+                for y0 in range(cy - 2, cy + 1):
+                    if self._is_open_area(x0, y0):
+                        danger = True
+        self._close_wall(x, y, direction)
+        return danger
+
 
 def main_func():
 
