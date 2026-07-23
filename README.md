@@ -1,0 +1,13 @@
+1 = sadece kuzey duvarı kapalı
+2 = sadece doğu duvarı kapalı
+4 = sadece güney duvarı kapalı
+8 = sadece batı duvarı kapalı
+3 = kuzey + doğu
+5 = kuzey + güney
+6 = doğu + güney
+7 = kuzey + doğu + güney
+10 = doğu + batı
+12 = güney + batı
+13 = batı + kuzey + güney
+14 = doğu + güney + batı
+15 = dört duvarın hepsi kapalı

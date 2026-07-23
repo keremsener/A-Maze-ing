@@ -8,3 +8,5 @@ htmlcov/
 .ruff_cache/
 .idea/
 .vscode/
+old_a_maze_ing.py
+.env
