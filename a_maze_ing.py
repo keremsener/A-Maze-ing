@@ -199,6 +199,22 @@ class MazeGenerator:
                 counter += 1
         return counter
 
+    def _is_open_area(self, x0: int, y0: int) -> bool:
+        for y in range(y0, y0 + 3):
+            for x in range(x0, x0 + 3):
+                if not self._in_bounds(x, y):
+                    return False
+                if (x, y) in self._blocked:
+                    return False
+
+        for y in range(y0, y0 + 3):
+            for x in range(x0, x0 + 3):
+                if x < x0 + 2 and self.grid[y][x] & EAST:
+                    return False
+                if y < y0 + 2 and self.grid[y][x] & SOUTH:
+                    return False
+        return True
+
 
 def main_func():
 
