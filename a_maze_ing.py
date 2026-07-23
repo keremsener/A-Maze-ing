@@ -18,7 +18,7 @@ MIN_MAP_HEIGHT = 7
 MIN_MAP_WIDTH = 9
 
 FOUR_PATTERN = (
-    "..X",
+    "X.X",
     "X.X",
     "XXX",
     "..X",
@@ -117,6 +117,14 @@ class MazeGenerator:
         """Return True if the '42' pattern has been applied to the maze."""
         return bool(self._blocked)
 
+    def _open_cells(self) -> list[tuple[int, int]]:
+        safe_zone = []
+        for y in range(self.height):
+            for x in range(self.width):
+                if (x, y) not in self._blocked:
+                    safe_zone.append((x, y))
+        return safe_zone
+
     def _pattern_rows(self) -> list[int]:
         """Candidate top rows, closest to the centred position first."""
         lowest = 1
@@ -193,6 +201,7 @@ def main_func():
     for y in range(pattern_maze.height):
         row_str = []
         for x in range(pattern_maze.width):
+            # print(x, y)
             if (x, y) in pattern_maze.pattern_cells:
                 row_str.append("XX")
             else:
