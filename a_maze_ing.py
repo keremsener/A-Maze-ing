@@ -2,6 +2,8 @@ from mazegen import MazeGenerator
 from dotenv import load_dotenv
 import os
 import sys
+import subprocess
+
 # pip install -e ./packages/mazegen
 
 maze_counter = 0
@@ -58,8 +60,10 @@ def main_func():
 """)
             question = int(input("Choice? (1-4):"))
             if question == 1:
+                subprocess.run("clear")
                 main_func()
             elif question == 2:
+                subprocess.run("clear")
                 shortest_path = not shortest_path
 
                 print(f"\n=== {type} MAZE (Path: {'Hidden' if shortest_path else 'Shown'}) ===")
