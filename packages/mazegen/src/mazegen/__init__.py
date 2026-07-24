@@ -259,7 +259,28 @@ class MazeGenerator:
                             if not self._creates_open_area(x, y, direction):
                                 self._open_wall(x, y, direction)
                                 break
+    @staticmethod
+    def coords_to_letters(path: list[tuple[int, int]]) -> str:
+        """Gidilen yolun koordinatlarını N, E, S, W harflerine çevirir."""
+        if not path:
+            return ""
 
+        letters = []
+        # Her adımı bir sonrakiyle kıyaslıyoruz
+        for i in range(len(path) - 1):
+            x1, y1 = path[i]
+            x2, y2 = path[i+1]
+
+            if y2 < y1:
+                letters.append("N")
+            elif x2 > x1:
+                letters.append("E")
+            elif y2 > y1:
+                letters.append("S")
+            elif x2 < x1:
+                letters.append("W")
+
+        return "".join(letters)
     def solve(self) -> list[tuple[int, int]]:
         """BFS algoritması ile girişten çıkışa giden yolu bulur."""
         queue = [[self.entry]]  # Gidilecek yolların listesi
@@ -273,6 +294,9 @@ class MazeGenerator:
 
             # Eğer çıkışa ulaştıysak, bu yolu direkt teslim et
             if (x, y) == self.exit:
+                save_file = open("maze.txt", "w")
+                save_file.write(self.coords_to_letters(path))
+                save_file.close()
                 return path
 
             # Çıkışta değilsek, 4 yöne bak
