@@ -50,6 +50,7 @@ clean:
 	rm -rf packages/mazegen/build packages/mazegen/dist
 	find . -name '*.egg-info' -type d -exec rm -rf {} + 2>/dev/null || true
 	find . -name '*.pyc' -delete 2>/dev/null || true
+	@find . -type d \( -name "__pycache__" -o -name ".mypy_cache" \) -exec rm -rf {} +
 
 # Run linters (flake8 and mypy)
 lint:
