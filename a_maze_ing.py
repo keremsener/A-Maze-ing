@@ -14,7 +14,7 @@ def main_func():
         raw_exit = os.getenv("EXIT", "3,3")
         exit_tuple = tuple(map(int, raw_exit.split(",")))
 
-        if os.getenv("PERFECT") == "True":
+        if perfect_val:
             type = "PERFECT"
         else:
             type = "PAC-MAN"
