@@ -9,6 +9,7 @@ import subprocess
 maze_counter = 0
 shortest_path = False
 
+
 def main_func():
     global maze_counter
     global shortest_path
@@ -66,7 +67,8 @@ def main_func():
                 subprocess.run("clear")
                 shortest_path = not shortest_path
 
-                print(f"\n=== {type} MAZE (Path: {'Hidden' if shortest_path else 'Shown'}) ===")
+                print(f"\n=== {type} MAZE (Path:"
+                      f"{'Hidden' if shortest_path else 'Shown'}) ===")
                 for y in range(perfect_maze.height):
                     row_str = []
                     for x in range(perfect_maze.width):
