@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from random import Random
 
 # ---- GLOBAL VARIABLES ----
@@ -65,7 +64,8 @@ class MazeGenerator:
         if self.width < 2 or self.height < 2:
             try:
                 raise MazeError(
-                    f"Maze size must be at least 2x2 (got {self.width}x{self.height})."
+                    f"Maze size must be at least 2x2"
+                    f"(got {self.width}x{self.height})."
                 )
             except MazeError as e:
                 print(e)
@@ -175,8 +175,10 @@ class MazeGenerator:
         lowest = 1
         highest = self.height - PATTERN_HEIGHT - 1
         centred = (self.height - PATTERN_HEIGHT) // 2
-
-        return sorted(range(lowest, highest + 1), key=lambda y: abs(y - centred))
+        return sorted(
+            range(lowest, highest + 1),
+            key=lambda y: abs(y - centred),
+        )
 
     def _block_at(self, x0: int, y0: int) -> frozenset[tuple[int, int]]:
         cells = set()
@@ -191,7 +193,8 @@ class MazeGenerator:
         for r, row_str in enumerate(TWO_PATTERN):
             for c, char in enumerate(row_str):
                 if char == "X":
-                    # Shift 4 units right on the X-axis to avoid overlapping with the '4'
+                    # Shift 4 units right on the
+                    # X-axis to avoid overlapping with the '4'
                     cells.add((x0 + 4 + c, y0 + r))
 
         return frozenset(cells)
@@ -251,10 +254,11 @@ class MazeGenerator:
                 self.random.shuffle(local_directions)
                 for direction in DIRECTIONS:
                     nx, ny = self._neighbour(x, y, direction)
-                    if self._in_bounds(nx, ny) and (nx, ny) not in self._blocked:
-                        if not self._creates_open_area(x, y, direction):
-                            self._open_wall(x, y, direction)
-                            break
+                    if self._in_bounds(nx, ny):
+                        if (nx, ny) not in self._blocked:
+                            if not self._creates_open_area(x, y, direction):
+                                self._open_wall(x, y, direction)
+                                break
 
     def solve(self) -> list[tuple[int, int]]:
         """BFS algoritması ile girişten çıkışa giden yolu bulur."""

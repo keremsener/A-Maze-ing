@@ -28,7 +28,6 @@ def main_func():
             perfect=perfect_val)
         perfect_maze.generate()
         solution_path = perfect_maze.solve()
-    
         for y in range(perfect_maze.height):
             row_str = []
             for x in range(perfect_maze.width):

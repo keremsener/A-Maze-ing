@@ -6,6 +6,7 @@
 5 = kuzey + güney
 6 = doğu + güney
 7 = kuzey + doğu + güney
+9 = kuzey + batı
 10 = doğu + batı
 12 = güney + batı
 13 = batı + kuzey + güney
