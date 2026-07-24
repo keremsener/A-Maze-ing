@@ -5,10 +5,12 @@ import sys
 # pip install -e ./packages/mazegen
 
 maze_counter = 0
-
+shortest_path = False
 
 def main_func():
     global maze_counter
+    global shortest_path
+    shortest_path = False
     try:
         load_dotenv()
         raw_entry = os.getenv("ENTRY", "0,0")
@@ -57,6 +59,27 @@ def main_func():
             question = int(input("Choice? (1-4):"))
             if question == 1:
                 main_func()
+            elif question == 2:
+                shortest_path = not shortest_path
+
+                print(f"\n=== {type} MAZE (Path: {'Hidden' if shortest_path else 'Shown'}) ===")
+                for y in range(perfect_maze.height):
+                    row_str = []
+                    for x in range(perfect_maze.width):
+                        if (x, y) == perfect_maze.entry:
+                            row_str.append("EN")
+                        elif (x, y) in perfect_maze.pattern_cells:
+                            row_str.append("XX")
+                        elif (x, y) == perfect_maze.exit:
+                            row_str.append("EX")
+                        elif (x, y) in solution_path:
+                            if not shortest_path:
+                                row_str.append("..")
+                            else:
+                                row_str.append(f"{perfect_maze.grid[y][x]:2}")
+                        else:
+                            row_str.append(f"{perfect_maze.grid[y][x]:2}")
+                    print("  ".join(row_str))
             elif question == 4:
                 print(f"Total number of mazes generated: {maze_counter}."
                       f" Program closing..")
