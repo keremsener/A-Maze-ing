@@ -1,0 +1,21 @@
+# A-Maze-ing default configuration
+# One KEY=VALUE pair per line. Lines starting with # are ignored.
+
+# Grid size, in cells.
+WIDTH=20
+HEIGHT=15
+
+# Entry and exit cells, written as x,y (x = column, y = row).
+# Both must be inside the grid and must not be the same cell.
+ENTRY=0,0
+EXIT=19,14
+
+# Where the generated maze is written.
+OUTPUT_FILE=maze.txt
+
+# True  -> exactly one path between entry and exit.
+# False -> a Pac-Man style board with several independent routes.
+PERFECT=True
+
+# Optional. Remove this line for a different maze on every run.
+SEED=42
