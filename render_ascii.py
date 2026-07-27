@@ -16,7 +16,9 @@ character cell is about twice as tall as it is wide.
 
 from __future__ import annotations
 
-from view import ANSI_RESET, Scene, Theme, ansi_bg, ansi_fg
+from typing import Callable
+
+from view import ANSI_RESET, Scene, Theme, THEMES, ansi_bg, ansi_fg
 
 HALF_BLOCK = "\u2580"
 
@@ -111,3 +113,39 @@ def draw(scene: Scene, theme: Theme, show_path: bool) -> str:
         )
         lines.append(line + ANSI_RESET)
     return "\n".join(lines)
+
+
+def run(scene: Scene, regenerate: Callable[[], Scene]) -> None:
+    """Show the maze and loop on the interaction menu.
+
+    Args:
+        scene: The maze to display.
+        regenerate: Callable returning a freshly generated scene.
+    """
+    show_path = True
+    theme_index = 0
+    while True:
+        theme = THEMES[theme_index % len(THEMES)]
+        mode = "perfect" if scene.perfect else "pac-man"
+        state = "shown" if show_path else "hidden"
+        print(draw(scene, theme, show_path))
+        print(f"\n=== A-Maze-ing ({mode}) ===")
+        print("1. Re-generate a new maze")
+        print(f"2. Show / hide the shortest path  [{state}]")
+        print(f"3. Rotate the wall colours        [{theme.name}]")
+        print("4. Quit")
+        try:
+            choice = input("Choice? (1-4): ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return
+        if choice == "1":
+            scene = regenerate()
+        elif choice == "2":
+            show_path = not show_path
+        elif choice == "3":
+            theme_index += 1
+        elif choice == "4":
+            return
+        else:
+            print("Please enter a number between 1 and 4.")
