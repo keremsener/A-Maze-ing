@@ -38,9 +38,10 @@ some machines only:
 
 from __future__ import annotations
 
-from typing import Any, Final
+import sys
+from typing import Any, Callable, Final
 
-from errors import RenderError
+from errors import AMazeIngError, RenderError
 from view import Scene, Theme, THEMES
 
 MAX_WINDOW_WIDTH: Final[int] = 1200
@@ -60,7 +61,7 @@ MAX_DRAWS_PER_FRAME: Final[int] = 64
 
 # Height, in pixels, of one line of the built-in MiniLibX font.
 FONT_HEIGHT: Final[int] = 20
-STATUS_LINES: Final[int] = 1
+STATUS_LINES: Final[int] = 2
 STATUS_PADDING: Final[int] = 5
 STATUS_HEIGHT: Final[int] = (
     STATUS_LINES * FONT_HEIGHT + (STATUS_LINES + 1) * STATUS_PADDING
@@ -76,6 +77,12 @@ FORMAT_ARGB: Final[int] = 1
 # mlx_sync command that waits until an image can be written again.
 SYNC_IMAGE_WRITABLE: Final[int] = 1
 
+KEY_ESC: Final[int] = 65307
+KEY_Q: Final[int] = 113
+KEY_ONE: Final[int] = 49
+KEY_TWO: Final[int] = 50
+KEY_THREE: Final[int] = 51
+KEY_FOUR: Final[int] = 52
 EVENT_DESTROY: Final[int] = 17
 EVENT_CLOSE: Final[int] = 33
 
@@ -258,13 +265,20 @@ def paint_scene(
 
 
 class MazeWindow:
-    """A MiniLibX window showing a maze."""
+    """A MiniLibX window showing a maze, with keyboard interactions.
 
-    def __init__(self, scene: Scene, title: str) -> None:
+    Keys: ``1`` regenerates, ``2`` shows or hides the shortest path,
+    ``3`` cycles the colour theme, ``4`` or Escape quits.
+    """
+
+    def __init__(
+        self, scene: Scene, regenerate: Callable[[], Scene], title: str
+    ) -> None:
         """Open the window and draw the first frame.
 
         Args:
             scene: The maze to display.
+            regenerate: Callable returning a freshly generated scene.
             title: Window title.
 
         Raises:
@@ -280,6 +294,7 @@ class MazeWindow:
             ) from None
 
         self.scene = scene
+        self.regenerate = regenerate
         self.show_path = True
         self.theme_index = 0
 
@@ -362,12 +377,36 @@ class MazeWindow:
             self.mlx_ptr, self.window, self.image, 0, 0,
         )
         mode = "perfect" if self.scene.perfect else "pac-man"
-        # Every character costs one draw call, so the line must stay
-        # under MAX_DRAWS_PER_FRAME once the maze image is counted.
-        # See the module docstring.
+        state = "on" if self.show_path else "off"
+        # Every character costs one draw call, so both lines together
+        # must stay under MAX_DRAWS_PER_FRAME once the maze image is
+        # counted. See the module docstring.
+        self._status_line(0, "1 new  2 path  3 col  4 quit")
         self._status_line(
-            0, f"{mode} {self.theme.name} {len(self.scene.path)}",
+            1,
+            f"{mode} {state} {self.theme.name} {len(self.scene.path)}",
         )
+
+    def _on_key(self, key: int, _param: object) -> None:
+        """Handle one key press."""
+        if key in (KEY_FOUR, KEY_ESC, KEY_Q):
+            self._quit()
+            return
+        if key == KEY_ONE:
+            # This runs inside a C callback, where an escaping exception
+            # would be swallowed by ctypes after printing a traceback.
+            try:
+                self.scene = self.regenerate()
+            except AMazeIngError as error:
+                print(f"Cannot regenerate: {error}", file=sys.stderr)
+                return
+        elif key == KEY_TWO:
+            self.show_path = not self.show_path
+        elif key == KEY_THREE:
+            self.theme_index += 1
+        else:
+            return
+        self.draw()
 
     def _on_expose(self, _param: object = None) -> None:
         """Repaint when the window manager asks for a fresh frame."""
@@ -391,6 +430,7 @@ class MazeWindow:
     def run(self) -> None:
         """Draw the first frame and enter the MiniLibX event loop."""
         self.draw()
+        self.mlx.mlx_key_hook(self.window, self._on_key, None)
         # MiniLibX 2.2 usually sends Expose only once, right after the
         # window opens; redrawing there guarantees a visible first frame.
         self.mlx.mlx_expose_hook(self.window, self._on_expose, None)
