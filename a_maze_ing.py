@@ -1,99 +1,143 @@
-from mazegen import MazeGenerator
-from dotenv import load_dotenv
+"""A-Maze-ing: generate a maze from a configuration file and display it.
+
+Usage::
+
+    python3 a_maze_ing.py config.txt
+
+The configuration is validated before anything else runs, so the maze
+generator only ever receives values it can work with. Every expected
+failure surfaces as a single readable line rather than a traceback.
+"""
+
+from __future__ import annotations
+
 import os
+import random
 import sys
-import subprocess
 
-# pip install -e ./packages/mazegen
+from config import MazeConfig, load_config
+from errors import AMazeIngError, RenderError
+from view import Scene
+from writer import write_maze
 
-maze_counter = 0
-shortest_path = False
+USAGE = "usage: python3 a_maze_ing.py config.txt"
+SEED_LIMIT = 2 ** 31 - 1
 
 
-def main_func():
-    global maze_counter
-    global shortest_path
-    shortest_path = False
+def build_scene(config: MazeConfig, seed: int | None) -> Scene:
+    """Generate a maze, write it to disk and wrap it for display.
+
+    Args:
+        config: The validated configuration.
+        seed: Seed for this particular maze, or None for a random one.
+
+    Returns:
+        A drawable snapshot of the generated maze.
+
+    Raises:
+        AMazeIngError: The generator is missing, or produced no path.
+    """
     try:
-        load_dotenv()
-        raw_entry = os.getenv("ENTRY", "0,0")
-        entry_tuple = tuple(map(int, raw_entry.split(",")))
-        perfect_val = os.getenv("PERFECT", "True").lower() == "true"
-        raw_exit = os.getenv("EXIT", "3,3")
-        exit_tuple = tuple(map(int, raw_exit.split(",")))
+        from mazegen import MazeGenerator
+    except ImportError as error:
+        raise AMazeIngError(
+            f"cannot import the mazegen package ({error}); run "
+            f"'make install' first."
+        ) from None
 
-        if perfect_val:
-            type = "PERFECT"
-        else:
-            type = "PAC-MAN"
+    maze = MazeGenerator(
+        width=config.width,
+        height=config.height,
+        entry=config.entry,
+        exit=config.exit,
+        perfect=config.perfect,
+        seed=seed,
+    )
+    maze.generate()
 
-        print(f"\n=== {type} MAZE ===")
-        perfect_maze = MazeGenerator(
-            width=int(os.getenv("WIDTH")),
-            height=int(os.getenv("HEIGHT")),
-            entry=entry_tuple,
-            exit=exit_tuple,
-            perfect=perfect_val)
-        maze_counter += 1
-        perfect_maze.generate()
-        solution_path = perfect_maze.solve()
-        for y in range(perfect_maze.height):
-            row_str = []
-            for x in range(perfect_maze.width):
-                if (x, y) == perfect_maze.entry:
-                    row_str.append("EN")
-                elif (x, y) in perfect_maze.pattern_cells:
-                    row_str.append("XX")
-                elif (x, y) == perfect_maze.exit:
-                    row_str.append("EX")
-                elif (x, y) in solution_path:
-                    row_str.append("..")
-                else:
-                    row_str.append(f"{perfect_maze.grid[y][x]:2}")
-            print("  ".join(row_str))
-        while True:
-            print("=== A-Maze-ing ===")
-            print("""
-1. Re-generate a new maze
-2. Show/Hide the shortest path
-3. Rotate the wall colours
-4. Quit
-""")
-            question = int(input("Choice? (1-4):"))
-            if question == 1:
-                subprocess.run("clear")
-                main_func()
-            elif question == 2:
-                subprocess.run("clear")
-                shortest_path = not shortest_path
+    # MazeGenerator.solve() writes to the file named by OUTPUT_FILE and
+    # raises TypeError when that variable is unset. Pointing it at our
+    # own output path keeps it happy; write_maze() then overwrites the
+    # file with the complete, correctly formatted contents.
+    os.environ["OUTPUT_FILE"] = config.output_file
+    path = maze.solve()
+    if not path:
+        raise AMazeIngError(
+            f"no path exists between entry {config.entry} and exit "
+            f"{config.exit}."
+        )
 
-                print(f"\n=== {type} MAZE (Path:"
-                      f"{'Hidden' if shortest_path else 'Shown'}) ===")
-                for y in range(perfect_maze.height):
-                    row_str = []
-                    for x in range(perfect_maze.width):
-                        if (x, y) == perfect_maze.entry:
-                            row_str.append("EN")
-                        elif (x, y) in perfect_maze.pattern_cells:
-                            row_str.append("XX")
-                        elif (x, y) == perfect_maze.exit:
-                            row_str.append("EX")
-                        elif (x, y) in solution_path:
-                            if not shortest_path:
-                                row_str.append("..")
-                            else:
-                                row_str.append(f"{perfect_maze.grid[y][x]:2}")
-                        else:
-                            row_str.append(f"{perfect_maze.grid[y][x]:2}")
-                    print("  ".join(row_str))
-            elif question == 4:
-                print(f"Total number of mazes generated: {maze_counter}."
-                      f" Program closing..")
-                sys.exit(0)
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    write_maze(config, maze.grid, MazeGenerator.coords_to_letters(path))
+    if not maze.pattern_applied:
+        print(
+            "Note: the maze is too small to hold the '42' pattern, "
+            "so it was omitted.",
+            file=sys.stderr,
+        )
+    return Scene(
+        width=config.width,
+        height=config.height,
+        grid=maze.grid,
+        entry=config.entry,
+        exit=config.exit,
+        path=frozenset(path),
+        pattern=maze.pattern_cells,
+        perfect=config.perfect,
+    )
+
+
+def display(config: MazeConfig, scene: Scene) -> None:
+    """Show *scene*, preferring MiniLibX and falling back to the terminal.
+
+    Args:
+        config: The validated configuration, used when regenerating.
+        scene: The maze to display.
+    """
+    def regenerate() -> Scene:
+        """Build a brand new maze with a fresh random seed."""
+        return build_scene(config, random.randrange(SEED_LIMIT))
+
+    try:
+        from render_mlx import MazeWindow
+
+        MazeWindow(scene, regenerate, "A-Maze-ing").run()
+    except RenderError as error:
+        print(f"Graphical display unavailable: {error}", file=sys.stderr)
+        print("Falling back to the terminal.\n", file=sys.stderr)
+        import render_ascii
+
+        render_ascii.run(scene, regenerate)
+
+
+def main(argv: list[str]) -> int:
+    """Run the program and return the process exit code.
+
+    Args:
+        argv: Command-line arguments, without the program name.
+
+    Returns:
+        0 on success, 1 on any expected failure.
+    """
+    if len(argv) != 1:
+        print(USAGE, file=sys.stderr)
+        return 1
+    try:
+        config = load_config(argv[0])
+        scene = build_scene(config, config.seed)
+        print(
+            f"Maze {config.width}x{config.height} written to "
+            f"{config.output_file}."
+        )
+        display(config, scene)
+    except AMazeIngError as error:
+        print(f"Error: {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main_func()
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        print()
+        sys.exit(130)
