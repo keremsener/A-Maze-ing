@@ -1,6 +1,4 @@
 from random import Random
-from dotenv import load_dotenv
-import os
 
 # ---- GLOBAL VARIABLES ----
 NORTH = 1
@@ -317,12 +315,8 @@ class MazeGenerator:
             # Bu yolun en sonundaki (şu an bulunduğumuz) hücreyi al
             x, y = path[-1]
 
-            # Eğer çıkışa ulaştıysak, bu yolu direkt teslim et
+            # Eğer çıkışa ulaştıysak, bu yolu direkt teslim et (Dosya I/O işlemi YOK!)
             if (x, y) == self.exit:
-                load_dotenv()
-                save_file = open(os.getenv("OUTPUT_FILE"), "w")
-                save_file.write(self.coords_to_letters(path))
-                save_file.close()
                 return path
 
             # Çıkışta değilsek, 4 yöne bak

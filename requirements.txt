@@ -2,4 +2,3 @@ flake8>=7.0
 mypy>=1.10
 pytest>=8.0
 build>=1.2
-python-dotenv>=1.0

@@ -38,7 +38,7 @@ def build_scene(config: MazeConfig, seed: int | None) -> Scene:
         AMazeIngError: The generator is missing, or produced no path.
     """
     try:
-        from mazegen import MazeGenerator
+        from packages.mazegen import MazeGenerator
     except ImportError as error:
         raise AMazeIngError(
             f"cannot import the mazegen package ({error}); run "
