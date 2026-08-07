@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from view import ANSI_RESET, Scene, Theme, THEMES, ansi_bg, ansi_fg
+from packages.presentation.view import ANSI_RESET, Scene, Theme, THEMES, ansi_bg, ansi_fg
 
 HALF_BLOCK = "\u2580"
 

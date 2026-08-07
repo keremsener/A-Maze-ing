@@ -41,8 +41,8 @@ from __future__ import annotations
 import sys
 from typing import Any, Callable, Final
 
-from errors import AMazeIngError, RenderError
-from view import Scene, Theme, THEMES
+from errors import RenderError
+from packages.presentation.view import Scene, Theme, THEMES
 
 MAX_WINDOW_WIDTH: Final[int] = 1200
 MAX_WINDOW_HEIGHT: Final[int] = 780
@@ -318,126 +318,112 @@ class MazeWindow:
         self.cell, self.wall = cell_size(
             scene.width, scene.height, budget_width, budget_height,
         )
-        needed = window_size(scene.width, scene.height, self.cell)
-        if needed[0] > budget_width or needed[1] > budget_height:
-            raise RenderError(
-                f"a {scene.width}x{scene.height} maze needs a "
-                f"{needed[0]}x{needed[1]} window, which does not fit on "
-                f"a {screen_width}x{screen_height} screen."
-            )
-        self.image_width = scene.width * self.cell + self.wall
-        self.image_height = scene.height * self.cell + self.wall
-
+        self.image_width, self.image_height = window_size(
+            scene.width, scene.height, self.cell,
+        )
         self.window = self.mlx.mlx_new_window(
             self.mlx_ptr, self.image_width,
-            self.image_height + STATUS_HEIGHT, title,
+            self.image_height, title,
         )
         if not self.window:
-            raise RenderError("MiniLibX could not open a window.")
+            raise RenderError("cannot create a MiniLibX window.")
         self.image = self.mlx.mlx_new_image(
             self.mlx_ptr, self.image_width, self.image_height,
         )
         if not self.image:
-            raise RenderError("MiniLibX could not allocate the image.")
+            raise RenderError("cannot create a MiniLibX image.")
+
+        self._render()
+        self._register_hooks()
 
     @property
     def theme(self) -> Theme:
-        """The colour scheme currently in use."""
-        return THEMES[self.theme_index % len(THEMES)]
+        """Return the current colour theme."""
+        return THEMES[self.theme_index]
 
-    def _status_line(self, index: int, text: str) -> None:
-        """Write one line of the status bar under the maze.
-
-        Args:
-            index: 0 for the first line, 1 for the second.
-            text: The text to display.
-        """
-        top = self.image_height + STATUS_PADDING
-        top += index * (FONT_HEIGHT + STATUS_PADDING)
+    def _draw_status(self, top: int) -> None:
+        """Draw the title and control hints in the top-left corner."""
         self.mlx.mlx_string_put(
             self.mlx_ptr, self.window, STATUS_PADDING, top,
-            STATUS_COLOUR, text,
+            STATUS_COLOUR, f"{self.theme.name.upper()} theme",
+        )
+        self.mlx.mlx_string_put(
+            self.mlx_ptr, self.window, STATUS_PADDING, top + FONT_HEIGHT,
+            STATUS_COLOUR, "1 regen  2 path  3 theme  4/ESC quit",
         )
 
-    def draw(self) -> None:
-        """Repaint the image and push it to the window."""
-        # The GPU owns the image while a frame is on screen; this waits
-        # until the buffer can be written again.
+    def _render(self) -> None:
+        """Redraw the image and the text overlay."""
         self.mlx.mlx_sync(self.mlx_ptr, SYNC_IMAGE_WRITABLE, self.image)
         buffer, bits, size_line, image_format = self.mlx.mlx_get_data_addr(
             self.image
         )
         painter = Painter(buffer, size_line, bits, image_format)
         paint_scene(
-            painter, self.scene, self.theme, self.show_path,
-            self.cell, self.wall,
+            painter, self.scene, self.theme, self.show_path, self.cell,
+            self.wall,
         )
         self.mlx.mlx_clear_window(self.mlx_ptr, self.window)
         self.mlx.mlx_put_image_to_window(
             self.mlx_ptr, self.window, self.image, 0, 0,
         )
-        mode = "perfect" if self.scene.perfect else "pac-man"
-        state = "on" if self.show_path else "off"
-        # Every character costs one draw call, so both lines together
-        # must stay under MAX_DRAWS_PER_FRAME once the maze image is
-        # counted. See the module docstring.
-        self._status_line(0, "1 new  2 path  3 col  4 quit")
-        self._status_line(
-            1,
-            f"{mode} {state} {self.theme.name} {len(self.scene.path)}",
-        )
+        self._draw_status(STATUS_PADDING)
 
-    def _on_key(self, key: int, _param: object) -> None:
-        """Handle one key press."""
+    def _redraw(self) -> None:
+        """Refresh the window after a state change."""
+        self._render()
+
+    def _next_theme(self) -> None:
+        """Cycle to the next colour theme."""
+        self.theme_index = (self.theme_index + 1) % len(THEMES)
+
+    def _on_key(self, key: int, _data: Any) -> int:
+        """Handle keyboard shortcuts."""
         if key in (KEY_FOUR, KEY_ESC, KEY_Q):
-            self._quit()
-            return
+            self._close()
+            return 0
         if key == KEY_ONE:
-            # This runs inside a C callback, where an escaping exception
-            # would be swallowed by ctypes after printing a traceback.
-            try:
-                self.scene = self.regenerate()
-            except AMazeIngError as error:
-                print(f"Cannot regenerate: {error}", file=sys.stderr)
-                return
+            self.scene = self.regenerate()
+            self._redraw()
         elif key == KEY_TWO:
             self.show_path = not self.show_path
+            self._redraw()
         elif key == KEY_THREE:
-            self.theme_index += 1
-        else:
-            return
-        self.draw()
+            self._next_theme()
+            self._redraw()
+        return 0
 
-    def _on_expose(self, _param: object = None) -> None:
-        """Repaint when the window manager asks for a fresh frame."""
-        if self.window:
-            self.draw()
+    def _on_expose(self, _data: Any) -> int:
+        """Redraw after the window is exposed."""
+        self._redraw()
+        return 0
 
-    def _on_close(self, _param: object = None) -> None:
+    def _on_close(self, _data: Any) -> int:
         """Handle the window manager close button."""
-        self._quit()
+        self._close()
+        return 0
 
-    def _quit(self) -> None:
-        """Release MiniLibX resources and leave the event loop."""
-        if self.image:
+    def _close(self) -> None:
+        """Tear down MiniLibX resources and exit the event loop."""
+        if getattr(self, "image", None):
             self.mlx.mlx_destroy_image(self.mlx_ptr, self.image)
             self.image = None
-        if self.window:
+        if getattr(self, "window", None):
             self.mlx.mlx_destroy_window(self.mlx_ptr, self.window)
             self.window = None
         self.mlx.mlx_loop_exit(self.mlx_ptr)
 
-    def run(self) -> None:
-        """Draw the first frame and enter the MiniLibX event loop."""
-        self.draw()
+    def _register_hooks(self) -> None:
+        """Bind the event handlers used by the window."""
         self.mlx.mlx_key_hook(self.window, self._on_key, None)
-        # MiniLibX 2.2 usually sends Expose only once, right after the
-        # window opens; redrawing there guarantees a visible first frame.
         self.mlx.mlx_expose_hook(self.window, self._on_expose, None)
         self.mlx.mlx_hook(
-            self.window, EVENT_DESTROY, 0, self._on_close, None,
+            self.window, EVENT_DESTROY, 0, self._on_close, None
         )
         self.mlx.mlx_hook(
-            self.window, EVENT_CLOSE, 0, self._on_close, None,
+            self.window, EVENT_CLOSE, 0, self._on_close, None
         )
+
+    def run(self) -> None:
+        """Start the MiniLibX event loop."""
         self.mlx.mlx_loop(self.mlx_ptr)

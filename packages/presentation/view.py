@@ -53,7 +53,7 @@ ANSI_RESET: Final[str] = "\033[0m"
 def ansi_bg(colour: int) -> str:
     """Return the ANSI escape that sets *colour* as the background."""
     return f"\033[48;2;{colour >> 16 & 255};{colour >> 8 & 255};" \
-           f"{colour & 255}m"
+        f"{colour & 255}m"
 
 
 @dataclass(frozen=True)
@@ -108,4 +108,4 @@ class Scene:
 def ansi_fg(colour: int) -> str:
     """Return the ANSI escape that sets *colour* as the foreground."""
     return f"\033[38;2;{colour >> 16 & 255};{colour >> 8 & 255};" \
-           f"{colour & 255}m"
+        f"{colour & 255}m"

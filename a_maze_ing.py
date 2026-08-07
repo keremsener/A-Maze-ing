@@ -17,8 +17,7 @@ import sys
 
 from errors import AMazeIngError, RenderError
 from packages.configuration import MazeConfig, load_config
-from view import Scene
-from writer import write_maze
+from packages.presentation import Scene, write_maze
 
 USAGE = "usage: python3 a_maze_ing.py packages/configuration/config.txt"
 SEED_LIMIT = 2 ** 31 - 1
@@ -98,15 +97,15 @@ def display(config: MazeConfig, scene: Scene) -> None:
         return build_scene(config, random.randrange(SEED_LIMIT))
 
     try:
-        from render_mlx import MazeWindow
+        from packages.display import MazeWindow
 
         MazeWindow(scene, regenerate, "A-Maze-ing").run()
     except RenderError as error:
         print(f"Graphical display unavailable: {error}", file=sys.stderr)
         print("Falling back to the terminal.\n", file=sys.stderr)
-        import render_ascii
+        from packages.presentation import run_ascii
 
-        render_ascii.run(scene, regenerate)
+        run_ascii(scene, regenerate)
 
 
 def main(argv: list[str]) -> int:
