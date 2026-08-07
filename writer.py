@@ -14,8 +14,8 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from config import MazeConfig
 from errors import OutputError
+from packages.configuration import MazeConfig
 
 Grid = Sequence[Sequence[int]]
 

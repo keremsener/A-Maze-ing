@@ -2,7 +2,7 @@
 
 Usage::
 
-    python3 a_maze_ing.py config.txt
+    python3 a_maze_ing.py packages/configuration/config.txt
 
 The configuration is validated before anything else runs, so the maze
 generator only ever receives values it can work with. Every expected
@@ -15,12 +15,12 @@ import os
 import random
 import sys
 
-from config import MazeConfig, load_config
 from errors import AMazeIngError, RenderError
+from packages.configuration import MazeConfig, load_config
 from view import Scene
 from writer import write_maze
 
-USAGE = "usage: python3 a_maze_ing.py config.txt"
+USAGE = "usage: python3 a_maze_ing.py packages/configuration/config.txt"
 SEED_LIMIT = 2 ** 31 - 1
 
 

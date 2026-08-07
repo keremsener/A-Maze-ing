@@ -16,7 +16,7 @@ DIM         := $(ESC)[2m
 VENV := .venv
 PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
-CONFIG ?= config.txt
+CONFIG ?= packages/configuration/config.txt
 IMAGE := a-maze-ing-mlx
 
 MYPY_FLAGS := --warn-return-any --warn-unused-ignores \
