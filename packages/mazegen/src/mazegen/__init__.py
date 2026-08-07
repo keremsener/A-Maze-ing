@@ -113,6 +113,8 @@ class MazeGenerator:
             except MazeError as e:
                 print(e)
         # Don't change the cell value; just clear the specified direction bit.
+        # bitleri tersine çevir ve birleştir
+        # (örn: doğu: 0010 ise döndür 1101 oldu.)
         self.grid[y][x] &= ~direction
         self.grid[ny][nx] &= ~OPPOSITE[direction]
 
@@ -143,27 +145,36 @@ class MazeGenerator:
                     safe_zone.append((x, y))
         return safe_zone
 
-    def _carve(self) -> None:
+    def _carve(self) -> None:  # random labirent oluşturumuz
         start = self.entry
         stack = [start]  # yolumuzu kaybetmemek için
         visited = {start}  # Gittiğimiz yerleri unutmamak için
 
         while stack:
-            x, y = stack[-1]
-            option = []
-            for direction in DIRECTIONS:
+            x, y = stack[-1]  # stackin en sonundan başla
+            option = []  # seçenekler için
+            for direction in DIRECTIONS:  # yönler içinde dönüyoruz 4 kere
+                # komşu kordinatları tutuyoruz
                 nx, ny = self._neighbour(x, y, direction)
+                # komşular sınırlar içerisinde değilse continue ile geç
                 if not self._in_bounds(nx, ny):
                     continue
+                # komşulara daha önce gidilmişse veya yasaklı bölgeyse(42)
                 if (nx, ny) in self._blocked or (nx, ny) in visited:
                     continue
+                # hiç sıkıntı yoksa seçeneklere ekliyoruz
                 option.append((direction, nx, ny))
+            # seçenekler boşsa hiçbir şey eklenmemişse ilkini poplayıp devam edioruz
             if not option:
                 stack.pop()
                 continue
+            # döngü bittikten sonra seçeneklerden random yol seçiyoruz
             direction, nx, ny = self.random.choice(option)
+            # duvarı açıyoruz
             self._open_wall(x, y, direction)
+            # gidilenlere eklioyruz
             visited.add((nx, ny))
+            # yolumuzu kaybetmemek için stacke ekliyoruz
             stack.append((nx, ny))
 
     def generate(self) -> list[list[int]]:
@@ -250,17 +261,29 @@ class MazeGenerator:
 
     def _braid(self) -> None:
         safe_zone = self._open_cells()
-        for x, y in safe_zone:
-            if self._open_count(x, y) == 1:
-                local_directions = list(DIRECTIONS)
-                self.random.shuffle(local_directions)
-                for direction in DIRECTIONS:
-                    nx, ny = self._neighbour(x, y, direction)
-                    if self._in_bounds(nx, ny):
-                        if (nx, ny) not in self._blocked:
-                            if not self._creates_open_area(x, y, direction):
-                                self._open_wall(x, y, direction)
-                                break
+
+        # Atlanan hücre kalmaması için tüm işlemi 2 kez tekrarla (double pass)
+        for _ in range(2):
+            for x, y in safe_zone:
+                if self._open_count(x, y) == 1:
+                    local_directions = list(DIRECTIONS)
+                    self.random.shuffle(local_directions)
+
+                    # Karışan doğru liste üzerinden dönsün
+                    for direction in local_directions:
+
+                        # O yönde gerçekten kapalı bir duvar var mı?
+                        # Eğer duvar yoksa (bit 0 ise) bu yönü atla
+                        if not self.grid[y][x] & direction:
+                            continue
+
+                        nx, ny = self._neighbour(x, y, direction)
+                        if self._in_bounds(nx, ny):
+                            if (nx, ny) not in self._blocked:
+                                if not self._creates_open_area(x, y, direction):
+                                    self._open_wall(x, y, direction)
+                                    break
+
     @staticmethod
     def coords_to_letters(path: list[tuple[int, int]]) -> str:
         """Gidilen yolun koordinatlarını N, E, S, W harflerine çevirir."""
@@ -283,6 +306,7 @@ class MazeGenerator:
                 letters.append("W")
 
         return "".join(letters)
+
     def solve(self) -> list[tuple[int, int]]:
         """BFS algoritması ile girişten çıkışa giden yolu bulur."""
         queue = [[self.entry]]  # Gidilecek yolların listesi
