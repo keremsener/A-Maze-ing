@@ -12,3 +12,8 @@
 13 = batı + kuzey + güney
 14 = doğu + güney + batı
 15 = dört duvarın hepsi kapalı
+
+--OPERATORLER--
+~ NOT OPERATORU
+&= AND OPERATORU
+|= OR OPERATORU

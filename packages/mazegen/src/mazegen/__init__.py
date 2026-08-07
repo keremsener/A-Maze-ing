@@ -112,14 +112,13 @@ class MazeGenerator:
                 raise MazeError("Cannot go outside the map")
             except MazeError as e:
                 print(e)
-        # Don't change the cell value; just clear the specified direction bit.
         # bitleri tersine çevir ve birleştir
         # (örn: doğu: 0010 ise döndür 1101 oldu.)
         self.grid[y][x] &= ~direction
         self.grid[ny][nx] &= ~OPPOSITE[direction]
 
     def _close_wall(self, x: int, y: int, direction: int):
-        # The new neighbor's coordinates are return
+        # Komşu kordinatlarını değişkenlerde kaydet.
         nx, ny = self._neighbour(x, y, direction)
         if not self._in_bounds(nx, ny):
             raise MazeError("Cannot go outside the map")
