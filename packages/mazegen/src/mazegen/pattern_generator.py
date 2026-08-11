@@ -1,3 +1,5 @@
+"""Placement helpers for the closed-cell 42 pattern."""
+
 # ---- "42" PATTERN CONSTANTS ----
 PATTERN_HEIGHT = 5
 PATTERN_WIDTH = 7
@@ -23,6 +25,14 @@ TWO_PATTERN = (
 
 
 class PatternGenerator:
+    """Mixin whose concrete generator supplies maze placement state."""
+
+    width: int
+    height: int
+    entry: tuple[int, int]
+    exit: tuple[int, int]
+    _blocked: frozenset[tuple[int, int]]
+
     @property
     def pattern_cells(self) -> frozenset[tuple[int, int]]:
         """Return the set of cells reserved for the '42' pattern."""
@@ -43,20 +53,34 @@ class PatternGenerator:
             key=lambda y: abs(y - centred),
         )
 
-    def _compute_pattern(self):
+    def _pattern_columns(self) -> list[int]:
+        """Candidate left columns, closest to the centre first."""
+        lowest = 1
+        highest = self.width - PATTERN_WIDTH - 1
+        centred = (self.width - PATTERN_WIDTH) // 2
+        return sorted(
+            range(lowest, highest + 1),
+            key=lambda x: abs(x - centred),
+        )
+
+    def _compute_pattern(self) -> frozenset[tuple[int, int]]:
         if self.height < MIN_MAP_HEIGHT or self.width < MIN_MAP_WIDTH:
             return frozenset()
-        x0 = (self.width - PATTERN_WIDTH) // 2
         forbidden_place = (self.width // 2, self.height // 2)
         coordinates = {self.entry, self.exit, forbidden_place}
         for y0 in self._pattern_rows():
-            candidate_cells = self._block_at(x0, y0)
-            if candidate_cells.isdisjoint(coordinates):
-                return candidate_cells
+            for x0 in self._pattern_columns():
+                candidate_cells = self._block_at(x0, y0)
+                if candidate_cells.isdisjoint(coordinates):
+                    return candidate_cells
         return frozenset()
 
-    def _block_at(self, x0: int, y0: int) -> frozenset[tuple[int, int]]:
-        cells = set()
+    def _block_at(
+        self,
+        x0: int,
+        y0: int,
+    ) -> frozenset[tuple[int, int]]:
+        cells: set[tuple[int, int]] = set()
 
         # Process the '4' digit pattern row by row and char by char
         for r, row_str in enumerate(FOUR_PATTERN):

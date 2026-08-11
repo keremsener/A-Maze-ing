@@ -11,7 +11,6 @@ failure surfaces as a single readable line rather than a traceback.
 
 from __future__ import annotations
 
-import os
 import random
 import sys
 
@@ -37,34 +36,26 @@ def build_scene(config: MazeConfig, seed: int | None) -> Scene:
         AMazeIngError: The generator is missing, or produced no path.
     """
     try:
-        from packages.mazegen import MazeGenerator
+        from mazegen import MazeError, MazeGenerator
     except ImportError as error:
         raise AMazeIngError(
             f"cannot import the mazegen package ({error}); run "
             f"'make install' first."
         ) from None
 
-    maze = MazeGenerator(
-        width=config.width,
-        height=config.height,
-        entry=config.entry,
-        exit=config.exit,
-        perfect=config.perfect,
-        seed=seed,
-    )
-    maze.generate()
-
-    # MazeGenerator.solve() writes to the file named by OUTPUT_FILE and
-    # raises TypeError when that variable is unset. Pointing it at our
-    # own output path keeps it happy; write_maze() then overwrites the
-    # file with the complete, correctly formatted contents.
-    os.environ["OUTPUT_FILE"] = config.output_file
-    path = maze.solve()
-    if not path:
-        raise AMazeIngError(
-            f"no path exists between entry {config.entry} and exit "
-            f"{config.exit}."
+    try:
+        maze = MazeGenerator(
+            width=config.width,
+            height=config.height,
+            entry=config.entry,
+            exit=config.exit,
+            perfect=config.perfect,
+            seed=seed,
         )
+        maze.generate()
+        path = maze.solve()
+    except MazeError as error:
+        raise AMazeIngError(str(error)) from None
 
     write_maze(config, maze.grid, MazeGenerator.coords_to_letters(path))
     if not maze.pattern_applied:
@@ -100,8 +91,12 @@ def display(config: MazeConfig, scene: Scene) -> None:
         from packages.display import MazeWindow
 
         MazeWindow(scene, regenerate, "A-Maze-ing").run()
-    except RenderError as error:
-        print(f"Graphical display unavailable: {error}", file=sys.stderr)
+    except Exception as error:
+        if isinstance(error, RenderError):
+            reason = str(error)
+        else:
+            reason = f"unexpected graphics error: {error}"
+        print(f"Graphical display unavailable: {reason}", file=sys.stderr)
         print("Falling back to the terminal.\n", file=sys.stderr)
         from packages.presentation import run_ascii
 

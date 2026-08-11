@@ -38,7 +38,6 @@ some machines only:
 
 from __future__ import annotations
 
-import sys
 from typing import Any, Callable, Final
 
 from errors import RenderError
@@ -298,8 +297,13 @@ class MazeWindow:
         self.show_path = True
         self.theme_index = 0
 
-        self.mlx = Mlx()
-        self.mlx_ptr = self.mlx.mlx_init()
+        try:
+            self.mlx = Mlx()
+            self.mlx_ptr = self.mlx.mlx_init()
+        except Exception as error:
+            raise RenderError(
+                f"cannot initialize MiniLibX: {error}"
+            ) from None
         if not self.mlx_ptr:
             raise RenderError(
                 "cannot connect to a display; check that an X server is "
@@ -321,6 +325,16 @@ class MazeWindow:
         self.image_width, self.image_height = window_size(
             scene.width, scene.height, self.cell,
         )
+        if (
+            self.image_width > budget_width
+            or self.image_height > budget_height
+        ):
+            raise RenderError(
+                f"the requested maze window {self.image_width}x"
+                f"{self.image_height} does not fit the available "
+                f"{budget_width}x{budget_height} screen budget; reduce "
+                "WIDTH or HEIGHT."
+            )
         self.window = self.mlx.mlx_new_window(
             self.mlx_ptr, self.image_width,
             self.image_height, title,
@@ -367,7 +381,10 @@ class MazeWindow:
         self.mlx.mlx_put_image_to_window(
             self.mlx_ptr, self.window, self.image, 0, 0,
         )
-        self._draw_status(STATUS_PADDING)
+        status_top = (
+            self.scene.height * self.cell + self.wall + STATUS_PADDING
+        )
+        self._draw_status(status_top)
 
     def _redraw(self) -> None:
         """Refresh the window after a state change."""

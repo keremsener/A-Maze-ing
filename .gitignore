@@ -1,13 +1,31 @@
+# Python and virtual environment
 .venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
-.coverage
-htmlcov/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
+
+# Build outputs
+.build/
+build/
+dist/
+
+# Editor, OS and environment
+.DS_Store
 .idea/
 .vscode/
-old_a_maze_ing.py
 .env
+
+# Generated application output
 maze.txt
+old_a_maze_ing.py
+
+# Local evaluation material - not submitted
+tests/
+en.subject.pdf
+packages/maze_analyzer.py
+TEKNIK_MULAKAT_SAVUNMA_REHBERI.md

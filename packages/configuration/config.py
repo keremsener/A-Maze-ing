@@ -229,13 +229,16 @@ def load_config(path: str) -> MazeConfig:
 
     seed_raw = pairs.get("SEED", "").strip()
     seed = _to_int("SEED", seed_raw) if seed_raw else None
+    output_file = _require(pairs, "OUTPUT_FILE")
+    if "\x00" in output_file:
+        raise ConfigError("OUTPUT_FILE cannot contain a NUL byte.")
 
     return MazeConfig(
         width=width,
         height=height,
         entry=entry,
         exit=exit_,
-        output_file=_require(pairs, "OUTPUT_FILE"),
+        output_file=output_file,
         perfect=_to_bool("PERFECT", _require(pairs, "PERFECT")),
         seed=seed,
     )

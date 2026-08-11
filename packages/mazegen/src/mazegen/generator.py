@@ -1,6 +1,8 @@
+"""Core maze generator."""
+
 from random import Random
 from .pattern_generator import PatternGenerator
-from .solve import solve_func
+from .solve import solve_grid
 # ---- GLOBAL VARIABLES ----
 NORTH = 1
 EAST = 2
@@ -29,54 +31,46 @@ class MazeGenerator(PatternGenerator):
         height: int,
         entry: tuple[int, int],
         exit: tuple[int, int],
-        perfect: bool = True,
+        perfect: bool = False,
         seed: int | None = None,
-    ):
+    ) -> None:
         self.width = width
         self.height = height
         self.entry = entry
         self.exit = exit
         self.perfect = perfect
         self.seed = seed
-        self.random = Random(seed)
         self._validate()
+        self._reset()
+
+    def _reset(self) -> None:
+        """Restore the initial closed grid and seeded random state."""
+        self.random = Random(self.seed)
         self.grid = [[ALL_WALLS] * self.width for _ in range(self.height)]
         self._blocked = self._compute_pattern()
 
     def _validate(self) -> None:
         if self.width < 2 or self.height < 2:
-            try:
-                raise MazeError(
-                    f"Maze size must be at least 2x2"
-                    f"(got {self.width}x{self.height})."
-                )
-            except MazeError as e:
-                print(e)
+            raise MazeError(
+                "Maze size must be at least 2x2 "
+                f"(got {self.width}x{self.height})."
+            )
 
         if self.entry == self.exit:
-            try:
-                raise MazeError("Entry and exit cannot be the same point.")
-            except MazeError as e:
-                print(e)
+            raise MazeError("Entry and exit cannot be the same point.")
         self._validate_point(self.entry, "Entry")
         self._validate_point(self.exit, "Exit")
 
     def _validate_point(self, point: tuple[int, int], name: str) -> None:
         if not (0 <= point[0] < self.width):
-            try:
-                raise MazeError(
-                    f"{name} x-coordinate ({point[0]}) is outside the maze."
-                )
-            except MazeError as e:
-                print(e)
+            raise MazeError(
+                f"{name} x-coordinate ({point[0]}) is outside the maze."
+            )
 
         if not (0 <= point[1] < self.height):
-            try:
-                raise MazeError(
-                    f"{name} y-coordinate ({point[1]}) is outside the maze."
-                )
-            except MazeError as e:
-                print(e)
+            raise MazeError(
+                f"{name} y-coordinate ({point[1]}) is outside the maze."
+            )
 
     def _in_bounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
@@ -85,20 +79,17 @@ class MazeGenerator(PatternGenerator):
         dx, dy = STEP[direction]
         return x + dx, y + dy
 
-    def _open_wall(self, x: int, y: int, direction: int):
+    def _open_wall(self, x: int, y: int, direction: int) -> None:
         # The new neighbor's coordinates are return
         nx, ny = self._neighbour(x, y, direction)
         if not self._in_bounds(nx, ny):
-            try:
-                raise MazeError("Cannot go outside the map")
-            except MazeError as e:
-                print(e)
+            raise MazeError("Cannot open a wall outside the maze.")
         # bitleri tersine çevir ve birleştir
         # (örn: doğu: 0010 ise döndür 1101 oldu.)
         self.grid[y][x] &= ~direction
         self.grid[ny][nx] &= ~OPPOSITE[direction]
 
-    def _close_wall(self, x: int, y: int, direction: int):
+    def _close_wall(self, x: int, y: int, direction: int) -> None:
         # Komşu kordinatlarını değişkenlerde kaydet.
         nx, ny = self._neighbour(x, y, direction)
         if not self._in_bounds(nx, ny):
@@ -134,7 +125,7 @@ class MazeGenerator(PatternGenerator):
                     continue
                 # hiç sıkıntı yoksa seçeneklere ekliyoruz
                 option.append((direction, nx, ny))
-            # seçenekler boşsa hiçbir şey eklenmemişse ilkini poplayıp devam edioruz
+            # Seçenek yoksa geri izleme için son hücreyi çıkar.
             if not option:
                 stack.pop()
                 continue
@@ -148,10 +139,55 @@ class MazeGenerator(PatternGenerator):
             stack.append((nx, ny))
 
     def generate(self) -> list[list[int]]:
+        self._reset()
         self._carve()
         if not self.perfect:
             self._braid()
+            self._ensure_minimum_loops(2)
         return self.grid
+
+    def _cycle_rank(self) -> int:
+        """Return the number of independent cycles in the passage graph."""
+        cells = set(self._open_cells())
+        edges = 0
+        for x, y in cells:
+            if (x + 1, y) in cells and not self.grid[y][x] & EAST:
+                edges += 1
+            if (x, y + 1) in cells and not self.grid[y][x] & SOUTH:
+                edges += 1
+        return edges - len(cells) + 1
+
+    def _closed_internal_walls(
+        self,
+    ) -> list[tuple[int, int, int]]:
+        """Return each closed wall between two normal cells once."""
+        cells = set(self._open_cells())
+        candidates: list[tuple[int, int, int]] = []
+        for x, y in cells:
+            for direction in (EAST, SOUTH):
+                nx, ny = self._neighbour(x, y, direction)
+                if (
+                    (nx, ny) in cells
+                    and self.grid[y][x] & direction
+                ):
+                    candidates.append((x, y, direction))
+        self.random.shuffle(candidates)
+        return candidates
+
+    def _ensure_minimum_loops(self, minimum: int) -> None:
+        """Open safe walls until the graph has *minimum* cycles."""
+        if self._cycle_rank() >= minimum:
+            return
+        for x, y, direction in self._closed_internal_walls():
+            if self._creates_open_area(x, y, direction):
+                continue
+            self._open_wall(x, y, direction)
+            if self._cycle_rank() >= minimum:
+                return
+        raise MazeError(
+            "Non-perfect mazes require at least two independent loops, "
+            f"but {self.width}x{self.height} cannot provide them safely."
+        )
 
     def _open_count(self, x: int, y: int) -> int:
         counter: int = 0
@@ -209,13 +245,15 @@ class MazeGenerator(PatternGenerator):
                         nx, ny = self._neighbour(x, y, direction)
                         if self._in_bounds(nx, ny):
                             if (nx, ny) not in self._blocked:
-                                if not self._creates_open_area(x, y, direction):
+                                if not self._creates_open_area(
+                                    x, y, direction
+                                ):
                                     self._open_wall(x, y, direction)
                                     break
 
     @staticmethod
     def coords_to_letters(path: list[tuple[int, int]]) -> str:
-        """Gidilen yolun koordinatlarını N, E, S, W harflerine çevirir."""
+        """Koordinatları N, E, S, W yön harflerine dönüştür."""
         if not path:
             return ""
 
@@ -235,4 +273,16 @@ class MazeGenerator(PatternGenerator):
                 letters.append("W")
 
         return "".join(letters)
-    solve = solve_func
+
+    def solve(self) -> list[tuple[int, int]]:
+        """Return the shortest entry-to-exit path.
+
+        Raises:
+            MazeError: The generated grid contains no such path.
+        """
+        path = solve_grid(self.grid, self.entry, self.exit)
+        if not path:
+            raise MazeError(
+                f"No path exists between {self.entry} and {self.exit}."
+            )
+        return path

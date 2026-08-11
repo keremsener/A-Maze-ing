@@ -40,6 +40,15 @@ def format_maze(
     Raises:
         OutputError: A cell does not fit in a single hexadecimal digit.
     """
+    if not grid or not grid[0]:
+        raise OutputError("the maze grid cannot be empty.")
+    width = len(grid[0])
+    if any(len(row) != width for row in grid):
+        raise OutputError("the maze grid must be rectangular.")
+    if any(letter not in "NESW" for letter in path_letters):
+        raise OutputError(
+            "the solution path may contain only N, E, S, and W."
+        )
     lines: list[str] = []
     for y, row in enumerate(grid):
         digits: list[str] = []
@@ -49,7 +58,7 @@ def format_maze(
                     f"cell ({x}, {y}) holds {cell}, which does not fit "
                     f"in one hexadecimal digit (expected 0..15)."
                 )
-            digits.append(f"{cell:x}")
+            digits.append(f"{cell:X}")
         lines.append("".join(digits))
     lines.append("")
     lines.append(f"{entry[0]},{entry[1]}")

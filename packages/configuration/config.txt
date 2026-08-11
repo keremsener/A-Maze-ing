@@ -15,7 +15,7 @@ OUTPUT_FILE=maze.txt
 
 # True  -> exactly one path between entry and exit.
 # False -> a Pac-Man style board with several independent routes.
-PERFECT=True
+PERFECT=False
 
 # Optional. Remove this line for a different maze on every run.
 SEED=42
