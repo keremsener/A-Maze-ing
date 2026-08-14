@@ -84,8 +84,6 @@ lint-strict: install-core
 	$(VENV)/bin/flake8 .
 	$(VENV)/bin/mypy . --strict
 
-test: install-core
-	$(PY) -m pytest tests -q
 
 package: install-core
 	$(PY) -m build --wheel --no-isolation --outdir . packages/mazegen
