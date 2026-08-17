@@ -226,20 +226,9 @@ Her set bit kapalı bir duvar demektir:
 | `A` | 10 | East + West |
 | `F` | 15 | Dört duvarın tamamı |
 
-## Mimari
 
-```mermaid
-flowchart LR
-    CLI["a_maze_ing.py"] --> CONFIG["load_config"]
-    CONFIG --> GEN["mazegen.MazeGenerator"]
-    GEN --> DFS["DFS carve"]
-    DFS --> LOOP["braid + loop guarantee"]
-    LOOP --> BFS["BFS solve"]
-    BFS --> WRITE["write_maze"]
-    BFS --> SCENE["immutable Scene"]
-    SCENE --> MLX["MiniLibX renderer"]
-    SCENE --> ASCII["ASCII fallback"]
-```
+
+
 
 Katman sınırları:
 
@@ -323,15 +312,6 @@ Constructor aşağıdakileri reddeder:
 Hata yazdırılıp devam edilmez; `MazeError` yükseltilir. Böylece yarı-geçerli
 bir generator nesnesi oluşmaz.
 
-### 2. Reset
-
-Her `generate()` çağrısı:
-
-- RNG'yi aynı seed ile yeniden kurar.
-- Bütün hücreleri `0xF` durumuna döndürür.
-- `42` pattern konumunu yeniden hesaplar.
-
-Bu yüzden aynı seeded nesnenin ikinci çağrısı ilk çağrıyla aynı sonucu verir.
 
 ### 3. Iterative randomized DFS
 
@@ -563,325 +543,10 @@ Public üyeler:
 Paket uygulamanın config, writer veya MLX modüllerini import etmez. Böylece
 başka bir tüketici kendi config ve render katmanını seçebilir.
 
-## Dosya ve fonksiyon rehberi
 
-### `a_maze_ing.py`
 
-#### `build_scene(config, seed)`
 
-- Kurulu `mazegen` public API'sini import eder.
-- Config değerlerini generator constructor'a geçirir.
-- Generate ve solve işlemlerini yapar.
-- Package `MazeError`ını application `AMazeIngError`ına çevirir.
-- Subject output dosyasını yazar.
-- Renderer-independent `Scene` üretir.
 
-Bu fonksiyon generation ile presentation arasındaki orchestration boundary'dir.
-
-#### `display(config, scene)`
-
-- `regenerate()` closure'ı ile yeni seed üretir.
-- Önce `MazeWindow` çalıştırır.
-- Normal grafik exception'larında ASCII renderer'a geçer.
-- `KeyboardInterrupt`, `Exception` değil `BaseException` olduğu için burada
-  yanlışlıkla yutulmaz.
-
-#### `main(argv)`
-
-- Tam bir argüman kontrolü yapar.
-- Config → Scene → success message → display akışını yönetir.
-- Beklenen application hatalarını tek satır stderr ve exit code `1` yapar.
-- Başarıda `0` döndürür.
-
-### `errors.py`
-
-- `AMazeIngError`: application beklenen hata base class'ı.
-- `ConfigError`: config okuma, syntax ve semantic hataları.
-- `OutputError`: serialization ve filesystem hataları.
-- `RenderError`: MiniLibX/display hataları.
-
-`mazegen.MazeError` ayrı tutulur; reusable package ana uygulamanın exception
-hiyerarşisine bağımlı değildir.
-
-### `packages/configuration/config.py`
-
-#### `MazeConfig`
-
-Frozen dataclass'tır. Parser yalnız bütün kontroller geçerse bu nesneyi döndürür.
-Rest of application aynı değerleri tekrar parse etmez.
-
-#### `_read_pairs(path)`
-
-- UTF-8 dosyayı satır satır okur.
-- Comment ve boş satırları atlar.
-- `=` yoksa line-number içeren hata verir.
-- Duplicate key'i reddeder.
-- I/O exception'larını `ConfigError`a çevirir.
-
-#### `_require(pairs, key)`
-
-Mandatory key'in var ve boş olmadığını garanti eder.
-
-#### `_to_int`, `_to_bool`, `_to_point`
-
-String değerleri typed değerlere dönüştürür ve hatada hangi key'in bozuk
-olduğunu mesajda belirtir.
-
-#### `_check_side`, `_check_inside`
-
-Boyut ve koordinat sınırlarını doğrular.
-
-#### `load_config(path)`
-
-Parse ve semantic validation sırasını tek public entry point'te birleştirir.
-NUL içeren output path'i filesystem'e ulaşmadan reddeder.
-
-### `packages/mazegen/src/mazegen/generator.py`
-
-#### `MazeError`
-
-Reusable package'in invalid input ve unsatisfied postcondition hatasıdır.
-
-#### `MazeGenerator.__init__`
-
-Parametreleri saklar, validation yapar ve ilk kapalı grid'i hazırlar. `perfect`
-default değeri subject ile uyumlu biçimde `False`tur.
-
-#### `_reset()`
-
-RNG, grid ve pattern state'ini başlangıca getirir.
-
-#### `_validate()`, `_validate_point()`
-
-Public input contract'ını korur; hata yazdırıp devam etmez.
-
-#### `_in_bounds()`, `_neighbour()`
-
-Koordinat matematiğini tek yerde tutar.
-
-#### `_open_wall()`, `_close_wall()`
-
-İki komşunun karşılıklı bitlerini birlikte günceller.
-
-#### `_open_cells()`
-
-Pattern dışında kalan passage graph vertex listesini üretir.
-
-#### `_carve()`
-
-Iterative randomized DFS spanning tree üretir.
-
-#### `generate()`
-
-Reset → DFS → gerekiyorsa braid → minimum loop postcondition akışıdır.
-
-#### `_cycle_rank()`
-
-Açık East/South edge'lerini bir kez sayıp bağımsız cycle sayısını hesaplar.
-
-#### `_closed_internal_walls()`
-
-Her internal kapalı duvarı East/South yönleri üzerinden tam bir kez listeler ve
-seeded RNG ile karıştırır.
-
-#### `_ensure_minimum_loops(minimum)`
-
-Güvenli duvarlar açarak cycle rank'ı minimum değere çıkarır; imkânsızsa hata
-verir.
-
-#### `_open_count()`
-
-Bir hücrenin passage degree'sini hesaplar.
-
-#### `_is_open_area()`, `_creates_open_area()`
-
-3×3 tamamen açık alan postcondition'ını korur.
-
-#### `_braid()`
-
-Dead-end hücrelere güvenli alternatif bağlantılar ekler.
-
-#### `coords_to_letters(path)`
-
-Coordinate path'i output footer için yön string'ine çevirir.
-
-#### `solve()`
-
-`solve_grid` BFS helper'ını çağırır ve unreachable sonucu `MazeError` yapar.
-
-### `packages/mazegen/src/mazegen/pattern_generator.py`
-
-- `pattern_cells`: immutable pattern coordinate set'i.
-- `pattern_applied`: pattern var/yok bilgisi.
-- `_pattern_rows()`: merkeze yakın y adayları.
-- `_pattern_columns()`: merkeze yakın x adayları.
-- `_compute_pattern()`: entry/exit/center çakışmadan ilk geçerli aday.
-- `_block_at()`: `FOUR_PATTERN` ve `TWO_PATTERN` bitmap'lerini coordinate
-  set'e çevirir.
-
-### `packages/mazegen/src/mazegen/solve.py`
-
-`solve_grid(grid, entry, exit_)`, deque ve parent map kullanan typed BFS
-helper'ıdır. Generator'dan bağımsız grid sözleşmesiyle çalışır.
-
-### `packages/presentation/writer.py`
-
-#### `format_maze()`
-
-- Empty/ragged grid'i reddeder.
-- Her cell'in 0..15 olduğunu kontrol eder.
-- Büyük hexadecimal karakter kullanır.
-- Path alphabet'ini `NESW` ile sınırlar.
-- Tam dosya içeriğini string olarak döndürür.
-
-Pure function olduğu için filesystem olmadan kolay test edilir.
-
-#### `write_maze()`
-
-Pure formatter çıktısını UTF-8 dosyaya yazar ve I/O exception'larını
-`OutputError`a çevirir.
-
-### `packages/presentation/view.py`
-
-- `Theme`: RGB renk paleti.
-- `THEMES`: classic, amber, matrix, ice.
-- `ansi_bg()`, `ansi_fg()`: 24-bit terminal escape kodları.
-- `Scene`: immutable renderer input'u.
-- `Scene.cell_colour()`: entry/exit/pattern/path/floor önceliğini uygular.
-
-### `packages/presentation/render_ascii.py`
-
-- `corridor_colour()`: terminal için hücre rengi.
-- `build_canvas()`: cell grid'i duvarları da içeren 2× çözünürlüklü canvas'a
-  çevirir.
-- `draw()`: iki satırı ANSI half-block karakterinde birleştirir.
-- `run()`: interaktif terminal menüsü.
-
-### `packages/display/render_mlx.py`
-
-- `cell_size()`: budget'a sığan en büyük cell boyutu.
-- `window_size()`: maze + duvar + status alanı.
-- `window_budget()`: gerçek ekran marjlarını uygular.
-- `_pixel()`: RGB rengini MLX buffer byte formatına çevirir.
-- `Painter.rect()`: raw buffer'a clipped rectangle yazar.
-- `paint_scene()`: bütün maze'i image buffer'a çizer.
-- `MazeWindow.__init__()`: MLX, ekran, pencere, image ve hook kurulumu.
-- `theme`: aktif theme property.
-- `_draw_status()`: maze altındaki komut satırları.
-- `_render()`, `_redraw()`: frame üretimi.
-- `_next_theme()`: theme index rotation.
-- `_on_key()`, `_on_expose()`, `_on_close()`: event callback'leri.
-- `_close()`: image/window kaynaklarını bırakır.
-- `_register_hooks()`: MLX callback kayıtları.
-- `run()`: event loop.
-
-## Önemli kod blokları
-
-### Simetrik duvar açma
-
-```python
-self.grid[y][x] &= ~direction
-self.grid[ny][nx] &= ~OPPOSITE[direction]
-```
-
-`&= ~direction` ilgili closed-wall bitini sıfırlar. İkinci satır komşunun
-karşı yönünü sıfırladığı için graph tek taraflı passage içermez.
-
-Alternatif olarak her edge ayrı nesne tutulabilirdi; bitmask yaklaşımı daha az
-memory ve doğrudan hex serialization sağlar.
-
-### Seeded ve tekrar kullanılabilir generate
-
-```python
-def generate(self) -> list[list[int]]:
-    self._reset()
-    self._carve()
-    if not self.perfect:
-        self._braid()
-        self._ensure_minimum_loops(2)
-    return self.grid
-```
-
-`_reset()` olmadan aynı nesnenin ikinci çağrısı eski açık duvarların üstüne
-yeni yollar ekler ve perfect invariant'ını bozar. Reset bu state leak'i
-engeller.
-
-### Cycle postcondition
-
-```python
-return edges - len(cells) + 1
-```
-
-Connected undirected graph için cyclomatic number formülüdür. `>= 2`
-kontrolü “muhtemelen loop vardır” yerine ölçülebilir bir guarantee verir.
-
-### Parent map ile BFS
-
-```python
-parents: dict[Point, Point | None] = {entry: None}
-queue = deque([entry])
-```
-
-Bir coordinate parent map'e eklendiği anda visited kabul edilir. Böylece aynı
-hücre queue'ya birden çok kez girmez.
-
-### Pure serialization
-
-```python
-text = format_maze(grid, config.entry, config.exit, path_letters)
-with open(config.output_file, "w", encoding="utf-8") as stream:
-    stream.write(text)
-```
-
-Formatlama ve I/O ayrımı, exact output'u filesystem yan etkisi olmadan test
-etmeyi sağlar.
-
-## Alternatifler ve tradeoff'lar
-
-### DFS yerine Prim veya Kruskal
-
-- **DFS seçimi:** basit, iterative, memory kontrollü, uzun koridorlu maze.
-- **Randomized Prim:** daha çok kısa branch ve farklı görsel karakter.
-- **Kruskal:** union-find gerekir; bütün edge listesini tutar.
-
-Bu proje için DFS, 42 seviyesinde anlatılabilirlik ve deterministic seed
-bakımından iyi dengedir.
-
-### BFS yerine DFS veya A*
-
-- **BFS:** unweighted grid'de en kısa yolu garanti eder.
-- **DFS solver:** bir yol bulur fakat shortest guarantee vermez.
-- **A\*:** büyük grid'de daha az node gezebilir fakat heuristic ve priority
-  queue karmaşıklığı ekler.
-
-Subject shortest route çıktısını kullandığı için BFS en doğrudan seçimdir.
-
-### Bitmask yerine dört boolean
-
-- Bitmask: tek integer, hızlı bit operation, output hex'e doğrudan dönüşüm.
-- Dört boolean: yeni başlayan için daha okunur fakat serialization ve memory
-  daha ağır.
-
-### Exception yerine print
-
-- Exception caller'a recovery/exit kararını bırakır.
-- Print edip devam etmek invalid nesne ve daha sonra ilgisiz `IndexError`
-  üretir.
-
-Reusable package `MazeError`, application ise kendi hata hiyerarşisini
-kullanır.
-
-### Src layout yerine flat layout
-
-- Src layout yanlışlıkla working-directory kaynağını import etmeyi engeller.
-- Wheel'in gerçekten build/install edilmesini zorunlu kılar.
-- Birden çok top-level module discovery hatasını ortadan kaldırır.
-
-### Bundled MLX wheel yerine PyPI
-
-`mlx` adı PyPI'da farklı projelerle çakışabilir. Subject tarafından verilen
-Ubuntu artifact'ini kullanmak yanlış paketi kurma riskini kaldırır ve evaluation
-sürümünü sabitler.
 
 ## Hata yönetimi
 
@@ -904,29 +569,7 @@ Kurallar:
   denenir.
 - `KeyboardInterrupt` exit code `130` ile ayrıdır.
 
-## Test stratejisi
 
-```bash
-make test
-```
-
-Test grupları:
-
-- Package wheel build/install/public import ve metadata
-- Generator validation ve default mode
-- Seed determinism ve repeated generation
-- Passage symmetry ve closed boundaries
-- Perfect connectivity ve cycle rank 0
-- Non-perfect connectivity ve cycle rank ≥2
-- 3×3 tamamen açık alan yasağı
-- 2×2 impossible non-perfect rejection
-- 42 pattern relocation ve `0xF` koruması
-- BFS path continuity ve unreachable error
-- Config syntax/semantic/NUL path/default config
-- Exact uppercase output ve invalid grid rejection
-- CLI exit code, output creation ve traceback absence
-- MLX oversize, status placement, initialization ve fallback
-- Makefile venv bootstrap, Ubuntu MLX extraction, dependency chain ve clean
 
 Lint:
 
@@ -978,15 +621,6 @@ Ana dosyalar:
 
 ### Yazılımcı 2: Generator, pattern ve solver
 
-Önerilen sıra:
-
-1. Dört duvar bitmask ile nasıl tutuluyor?
-2. DFS spanning tree neden perfect maze oluşturuyor?
-3. İki taraflı wall symmetry nasıl korunuyor?
-4. Braiding ve cycle rank guarantee farkı nedir?
-5. 3×3 kontrolü neden duvarı geçici açıp kapatıyor?
-6. 42 pattern graph'tan nasıl izole ediliyor?
-7. Deque + parent map BFS neden shortest path veriyor?
 
 Ana dosyalar:
 
@@ -994,57 +628,14 @@ Ana dosyalar:
 - `pattern_generator.py`
 - `solve.py`
 
-### Yazılımcı 3: Renderer, paketleme, Makefile ve testler
 
-Önerilen sıra:
-
-1. Immutable Scene neden iki renderer arasında boundary?
-2. MLX window budget ve image buffer nasıl çalışıyor?
-3. Grafik yoksa ASCII fallback nasıl devreye giriyor?
-4. Src layout neden wheel build problemini çözüyor?
-5. `make install` fresh checkout'ta hangi sırayı izliyor?
-6. Hangi test hangi subject invariant'ını ispatlıyor?
-
-Ana dosyalar:
 
 - `packages/presentation/view.py`
 - `packages/presentation/render_ascii.py`
 - `packages/display/render_mlx.py`
 - `packages/mazegen/pyproject.toml`
 - `Makefile`
-- `tests/`
 
-### Sık evaluation soruları
-
-**Perfect ve non-perfect arasındaki graph farkı nedir?**
-
-Perfect connected tree'dir ve cycle rank 0'dır. Non-perfect aynı connected
-graph'a güvenli ekstra edge'ler ekler ve cycle rank en az 2 olur.
-
-**Neden sadece braid yeterli değil?**
-
-Braid bir kalite heuristic'idir. Bazı küçük seed/geometrilerde yalnız bir loop
-oluşturabilir. Cycle rank ölçümü global postcondition sağlar.
-
-**Neden bir hücrenin duvarını tek taraflı açmıyoruz?**
-
-Grid undirected graph'tır. Tek taraflı bit değişimi writer, solver ve renderer
-arasında çelişki oluşturur.
-
-**Neden BFS?**
-
-Tüm passage edge'lerinin ağırlığı eşittir; BFS ilk ulaştığı exit path'inin en
-kısa olduğunu garanti eder.
-
-**Seed determinism nasıl korunuyor?**
-
-Global `random` yerine generator'a ait `Random(seed)` kullanılır ve her
-`generate()` başında yeniden kurulur.
-
-**MLX yoksa proje başarısız mı sayılır?**
-
-Hayır. Maze önce üretilip dosyaya yazılır. Grafik boundary hata verirse aynı
-Scene terminalde gösterilir.
 
 ## Ekip çalışması
 

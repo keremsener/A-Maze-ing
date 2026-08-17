@@ -106,7 +106,7 @@ class MazeGenerator(PatternGenerator):
                     safe_zone.append((x, y))
         return safe_zone
 
-    def _carve(self) -> None:  # random labirent oluşturumuz
+    def _carve(self) -> None:  # DFS labirent oluşturumuz
         start = self.entry
         stack = [start]  # yolumuzu kaybetmemek için
         visited = {start}  # Gittiğimiz yerleri unutmamak için

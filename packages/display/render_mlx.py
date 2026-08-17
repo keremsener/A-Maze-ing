@@ -43,8 +43,8 @@ from typing import Any, Callable, Final
 from errors import RenderError
 from packages.presentation.view import Scene, Theme, THEMES
 
-MAX_WINDOW_WIDTH: Final[int] = 1200
-MAX_WINDOW_HEIGHT: Final[int] = 780
+MAX_WINDOW_WIDTH: Final[int] = 2800
+MAX_WINDOW_HEIGHT: Final[int] = 1780
 MIN_CELL: Final[int] = 4
 MAX_CELL: Final[int] = 44
 
