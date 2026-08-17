@@ -45,7 +45,9 @@ class MazeGenerator(PatternGenerator):
 
     def _reset(self) -> None:
         """Restore the initial closed grid and seeded random state."""
-        self.random = Random(self.seed)
+        self.random = Random()
+        if self.seed is not None:
+            self.random.seed(self.seed)
         self.grid = [[ALL_WALLS] * self.width for _ in range(self.height)]
         self._blocked = self._compute_pattern()
 

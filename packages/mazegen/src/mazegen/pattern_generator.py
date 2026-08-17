@@ -35,16 +35,19 @@ class PatternGenerator:
 
     @property
     def pattern_cells(self) -> frozenset[tuple[int, int]]:
-        """Bu özellik, '42' deseninin kapatılmış olarak ayrılmış hücrelerini döndürür."""
+        """Bu özellik, '42' deseninin kapatılmış olarak
+        ayrılmış hücrelerini döndürür."""
         return self._blocked
 
     @property
     def pattern_applied(self) -> bool:
-        """Bu özellik, '42' deseni labirente uygulanmışsa True döndürür; aksi halde False döner."""
+        """Bu özellik, '42' deseni labirente uygulanmışsa
+        True döndürür; aksi halde False döner."""
         return bool(self._blocked)
 
     def _pattern_rows(self) -> list[int]:
-        """Desenin üst satır adaylarını döndürür; merkez konuma en yakın satırlar önce gelir."""
+        """Desenin üst satır adaylarını döndürür;
+        merkez konuma en yakın satırlar önce gelir."""
         lowest = 1
         highest = self.height - PATTERN_HEIGHT - 1
         centred = (self.height - PATTERN_HEIGHT) // 2
@@ -54,7 +57,8 @@ class PatternGenerator:
         )
 
     def _pattern_columns(self) -> list[int]:
-        """Desenin sol sütun adaylarını döndürür; merkez konuma en yakın sütunlar önce gelir."""
+        """Desenin sol sütun adaylarını döndürür;
+        merkez konuma en yakın sütunlar önce gelir."""
         lowest = 1
         highest = self.width - PATTERN_WIDTH - 1
         centred = (self.width - PATTERN_WIDTH) // 2
@@ -64,7 +68,8 @@ class PatternGenerator:
         )
 
     def _compute_pattern(self) -> frozenset[tuple[int, int]]:
-        """Haritanın merkezine yerleştirilecek '42' deseninin uygun konumunu bulup o hücreleri döndürür."""
+        """Haritanın merkezine yerleştirilecek '42'
+        deseninin uygun konumunu bulup o hücreleri döndürür."""
         if self.height < MIN_MAP_HEIGHT or self.width < MIN_MAP_WIDTH:
             return frozenset()
         forbidden_place = (self.width // 2, self.height // 2)
@@ -81,7 +86,8 @@ class PatternGenerator:
         x0: int,
         y0: int,
     ) -> frozenset[tuple[int, int]]:
-        """Verilen başlangıç konumundan '4' ve '2' rakamlarının desenini oluşturan tüm hücre koordinatlarını hesaplar."""
+        """Verilen başlangıç konumundan '4' ve '2' rakamlarının
+        desenini oluşturan tüm hücre koordinatlarını hesaplar."""
         cells: set[tuple[int, int]] = set()
 
         # '4' rakamı desenini satır satır ve karakter karakter işler.
@@ -94,7 +100,8 @@ class PatternGenerator:
         for r, row_str in enumerate(TWO_PATTERN):
             for c, char in enumerate(row_str):
                 if char == "X":
-                    # '4' ile çakışmaması için x ekseninde 4 birim sağa kaydırır.
+                    # '4' ile çakışmaması için x ekseninde
+                    # 4 birim sağa kaydırır.
                     cells.add((x0 + 4 + c, y0 + r))
 
         return frozenset(cells)
