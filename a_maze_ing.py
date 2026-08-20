@@ -77,12 +77,8 @@ def build_scene(config: MazeConfig, seed: int | None) -> Scene:
 
 
 def display(config: MazeConfig, scene: Scene) -> None:
-    """Show *scene*, preferring MiniLibX and falling back to the terminal.
+    """Show *scene* using MiniLibX."""
 
-    Args:
-        config: The validated configuration, used when regenerating.
-        scene: The maze to display.
-    """
     def regenerate() -> Scene:
         """Build a brand new maze with a fresh random seed."""
         return build_scene(config, random.randrange(SEED_LIMIT))
@@ -91,16 +87,13 @@ def display(config: MazeConfig, scene: Scene) -> None:
         from packages.display import MazeWindow
 
         MazeWindow(scene, regenerate, "A-Maze-ing").run()
+    except RenderError:
+        raise
     except Exception as error:
-        if isinstance(error, RenderError):
-            reason = str(error)
-        else:
-            reason = f"unexpected graphics error: {error}"
-        print(f"Graphical display unavailable: {reason}", file=sys.stderr)
-        print("Falling back to the terminal.\n", file=sys.stderr)
-        from packages.presentation import run_ascii
+        raise RenderError(
+            f"unexpected graphics error: {error}"
+        ) from None
 
-        run_ascii(scene, regenerate)
 
 
 def main(argv: list[str]) -> int:

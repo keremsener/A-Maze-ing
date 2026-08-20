@@ -12,7 +12,7 @@ uygunsa tamamen kapalı hücrelerden görünür bir `42` deseni bulunur.
 
 Üretilen labirent, duvarları hexadecimal bit maskeleriyle kodlayan bir dosyaya
 yazılır. Giriş, çıkış ve BFS ile bulunan en kısa çözüm de bu dosyaya eklenir.
-Labirent MiniLibX ile, grafik ortam kullanılamadığında ise terminalde gösterilir.
+Labirent MiniLib. gösterilir.
 
 ## Instructions
 
@@ -166,9 +166,8 @@ tutulur. `solve()` girişten çıkışa en kısa yolu koordinat listesi olarak;
 
 - `SEED` ile tekrarlanabilir üretim desteklenir.
 - Perfect ve braid edilmiş non-perfect üretim modları bulunur.
-- Labirent önce MiniLibX ile gösterilir; grafik ekranı kullanılamazsa terminal
-  görünümüne geçilir.
-- Hem grafik hem terminal görünümünde `1` yeni labirent üretir, `2` en kısa
+
+- grafik görünümünde `1` yeni labirent üretir, `2` en kısa
   yolu gösterir/gizler, `3` duvar renk temasını değiştirir ve `4` programdan
   çıkar. Grafik görünümünde `Q` ve `Esc` de çıkış yapar.
 - `42` deseni ayrı renkle gösterilir.
@@ -181,7 +180,7 @@ tutulur. `solve()` girişten çıkışa en kısa yolu koordinat listesi olarak;
   perfect/non-perfect üretim, BFS solver, yeniden kullanılabilir paket yapısı
   ve Makefile üzerinde çalıştı.
 - **yukasaca:** config parser ve doğrulama, hata sınıfları, output writer,
-  ortak görünüm modeli, terminal/MiniLibX renderer'ları, kullanıcı etkileşimleri
+  ortak görünüm modeli, MiniLibX renderer'ları, kullanıcı etkileşimleri
   ve ana program entegrasyonu üzerinde çalıştı.
 - **Ortak:** subject kontrolü, lint/type kontrolleri, paketleme doğrulaması ve
   dokümantasyon yürütüldü.
