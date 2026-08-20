@@ -1,4 +1,4 @@
-from .view import Scene, Theme, THEMES
+from .view import ANSI_RESET, Scene, Theme, THEMES, ansi_bg, ansi_fg
 from .writer import write_maze
 
 __all__ = [
@@ -8,6 +8,5 @@ __all__ = [
     "THEMES",
     "ansi_bg",
     "ansi_fg",
-    "run_ascii",
     "write_maze",
 ]

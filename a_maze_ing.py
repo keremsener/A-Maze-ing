@@ -95,7 +95,6 @@ def display(config: MazeConfig, scene: Scene) -> None:
         ) from None
 
 
-
 def main(argv: list[str]) -> int:
     """Run the program and return the process exit code.
 
