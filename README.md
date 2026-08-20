@@ -131,10 +131,13 @@ grid üzerinde breadth-first search (BFS) ile bulunur.
 
 ## Reusable module
 
-Labirent üretim mantığı `packages/mazegen` altında bağımsız `mazegen` paketi
-olarak bulunur. Paket uygulamanın yapılandırma, dosya yazma veya görüntüleme
-katmanlarına bağlı değildir. `make package`, kök dizinde daha sonra `pip` ile
-kurulabilen `mazegen-*.whl` dosyasını üretir.
+Labirent üretim mantığı `mazegen` paketi olarak sunulur; bunun yanında yapılandırma, 
+çıktı yazma ve MiniLibX görünüm katmanları da aynı wheel içinde paketlenir. 
+Böylece başka bir yere taşıdığınızda wheel ile birlikte `a_maze_ing.py` kullanmanız 
+yeterlidir; varsayılan `config.txt` de wheel'e dahil edilir.
+
+`make package`, kök dizinde daha sonra `pip` ile kurulabilen `mazegen-*.whl` 
+dosyasını üretir.
 
 Temel kullanım ve özel boyut/seed geçirme örneği:
 

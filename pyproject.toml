@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mazegen"
+version = "0.1.0"
+description = "A procedural 42 maze generator"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE.md"]
+authors = [
+    {name = "ksener"},
+    {name = "yukasaca"},
+]
+dependencies = []
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[tool.setuptools]
+include-package-data = true
+py-modules = ["a_maze_ing", "errors"]
+
+packages = [
+    "packages",
+    "packages.configuration",
+    "packages.display",
+    "packages.presentation",
+    "mazegen",
+]
+
+[tool.setuptools.package-dir]
+"packages" = "packages"
+mazegen = "packages/mazegen/src/mazegen"
+
+[tool.setuptools.package-data]
+"packages.configuration" = ["config.txt"]
+mazegen = ["py.typed"]

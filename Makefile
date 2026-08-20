@@ -14,7 +14,7 @@ MLX_STAMP := $(VENV)/.mlx-installed
 MLX_ARCHIVE := packages/mlx-2.2.tgz
 MLX_BUILD_DIR := .build/mlx
 MLX_WHEEL := $(MLX_BUILD_DIR)/ubuntu/mlx-2.2-py3-none-any.whl
-MAZEGEN_SOURCES := $(wildcard packages/mazegen/src/mazegen/*.py)
+APP_SOURCES := $(shell find packages -type f \( -name '*.py' -o -name 'config.txt' -o -name 'py.typed' \) | sort) a_maze_ing.py pyproject.toml README.md LICENSE.md
 
 MYPY_FLAGS := --warn-return-any --warn-unused-ignores \
 	--ignore-missing-imports --disallow-untyped-defs \
@@ -30,11 +30,10 @@ $(PY):
 		|| { printf '%s\n' 'Error: Python 3.10 or newer is required.' >&2; exit 1; }
 	$(PYTHON) -m venv $(VENV)
 
-$(CORE_STAMP): requirements.txt packages/mazegen/pyproject.toml \
-	$(MAZEGEN_SOURCES) | $(PY)
+$(CORE_STAMP): requirements.txt pyproject.toml $(APP_SOURCES) | $(PY)
 	$(PIP) install --upgrade pip setuptools wheel
 	$(PIP) install -r requirements.txt
-	$(PIP) install --no-build-isolation --force-reinstall packages/mazegen
+	$(PIP) install --no-build-isolation --force-reinstall .
 	@touch $(CORE_STAMP)
 
 install-core: $(CORE_STAMP)
@@ -86,13 +85,14 @@ lint-strict: install-core
 
 
 package: install-core
-	$(PY) -m build --wheel --no-isolation --outdir . packages/mazegen
+	$(PY) -m build --wheel --no-isolation --outdir . .
 
 clean:
 	find . -type d -name '__pycache__' -prune -exec rm -rf {} +
 	find . -type d -name '*.egg-info' -prune -exec rm -rf {} +
 	find . -type f -name '*.pyc' -delete
 	rm -rf .build .mypy_cache .pytest_cache build dist
+	rm -rf mazegen.egg-info
 	rm -rf packages/mazegen/build packages/mazegen/dist
 	@printf '%s\n' '[Clean] Caches and temporary build files removed.'
 
@@ -105,5 +105,5 @@ help:
 		'make lint          Run subject-required Flake8 and mypy checks' \
 		'make lint-strict   Run Flake8 and mypy --strict' \
 		'make test          Run the pytest suite' \
-		'make package       Build mazegen wheel at repository root' \
+		'make package       Build the full mazegen wheel at repository root' \
 		'make clean         Remove caches; preserve the submitted wheel'
